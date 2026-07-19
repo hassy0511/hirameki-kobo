@@ -1,7 +1,7 @@
 {
-  "name": "ひらめき工房と そらのまち",
+  "name": "ひらめき工房",
   "short_name": "ひらめき工房",
-  "description": "足し算と引き算で空の島々を修理する、小学1年生向け学習ゲーム",
+  "description": "さわって、動かして、考える。小学1年生算数の全66ステージを遊べる学習ゲーム",
   "lang": "ja",
   "id": "./",
   "start_url": "./",
@@ -9,15 +9,9 @@
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
   "orientation": "any",
-  "background_color": "#10143c",
-  "theme_color": "#161b47",
+  "background_color": "#17204a",
+  "theme_color": "#17204a",
   "icons": [
-    {
-      "src": "icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    },
     {
       "src": "icon-192.png",
       "sizes": "192x192",
