@@ -1,10 +1,10 @@
-# 小学2年生を安全に追加する実装計画
+# 小学2年生の統合実装記録
 
 ## 結論
 
-小学2年生を現行の `LINES` へ直接追加してはならない。現在の保存形式はステージIDとラインIDを学年なしで保存しているため、進捗、最近問、履歴、タイムアタックが小学1年生と衝突する。
+小学2年生を小学1年生の `LINES` へ直接追加せず、`COURSES.g1/g2` とstate v4で分離して実装した。これにより、同じラインIDを使っても、進捗、最近問、履歴、タイムアタックは衝突しない。
 
-先に学年レジストリとstate v4を導入し、小学1年生の既存記録を `grades.g1` へ無変更で移す。その後、`grade2-curriculum.js` の66ステージを `CURRICULA.g2` として有効化する。
+既存v1〜v3記録は `courses.g1` へ移し、`grade2-curriculum.js` の66ステージを `COURSES.g2` として有効化した。コース選択から二年生を直接開始できる。小学3年生の追加要件は `docs/implementation_math_g3.md` を参照する。
 
 ## カリキュラムの正本
 
@@ -12,12 +12,12 @@
 - 小学2年生：`grade2-curriculum.js` の6ライン・66ステージ
 - 二年生の調査・設計根拠：`docs/curriculum_math_g2_overview.md`
 
-`grade2-curriculum.js` は現在メタデータだけを公開し、`index.html`、`sw.js` からは読み込まない。これにより、ユーザーが確認中の小学1年生版へ表示・保存形式の変更を混ぜない。
+`grade2-curriculum.js`、二つのG2問題runtime、`course-core.js` は `index.html` と `sw.js` へ登録済みである。小学1年生の旧APIとstage IDは互換のため維持する。
 
-## 目標データモデル
+## 実装データモデル
 
 ```js
-const CURRICULA = {
+const COURSES = {
   g1: {
     id: 'g1',
     label: '1ねんせい',
@@ -35,17 +35,16 @@ const CURRICULA = {
 };
 ```
 
-互換期間中は、現在の `LINES`、`ISLANDS`、`LINE_ORDER` を `CURRICULA.g1` のaliasとして残す。既存の小学1年生テストと保存データを一度に壊さないためである。
+互換期間中は、現在の `LINES`、`ISLANDS`、`LINE_ORDER` を小学1年生のaliasとして残す。既存の小学1年生テストと保存データを壊さないためである。
 
 正式APIは学年を必須にする。
 
 ```js
-curriculumFor(gradeId)
-lineFor(gradeId, lineId)
-stageFor(gradeId, lineId, stageId)
-makeStageQuestions(gradeId, lineId, stageId, options)
-makeTimeAttackQuestions(gradeId, lineId, options)
-isUnlocked(state, gradeId, lineId, stageId)
+courseFor(courseId)
+lineFor(courseId, lineId)
+makeStageQuestions(courseId, lineId, stageId, options)
+makeTimeAttackQuestions(courseId, lineId, options)
+isUnlocked(state, courseId, stageIndex, lineId)
 ```
 
 不明なIDは例外または明示的なエラーにする。現在のように未知のラインを小学1年生の `number` へ黙って置き換えると、二年生の定義漏れが一年生問題として表示される。
@@ -58,8 +57,9 @@ isUnlocked(state, gradeId, lineId, stageId)
   introSeen: true,
   workshopName: '',
   settings: {},
-  currentGrade: 'g1',
-  grades: {
+  activeCourseId: 'g1',
+  courseChosen: false,
+  courses: {
     g1: {
       lastLine: 'number',
       progress: {},
@@ -94,16 +94,16 @@ isUnlocked(state, gradeId, lineId, stageId)
 
 1. 保存キー `lumina_state_v1` は維持する。
 2. 既存のv1・v2は現行ロジックで一度v3相当へ正規化する。
-3. v3の `progress`、`parts`、`moods`、`stats`、`lineStats`、`lineIntros`、`timeAttack`、`recentQuestions`、`recentRush`、`history` をそのまま `grades.g1` へ移す。
+3. v3の `progress`、`parts`、`moods`、`stats`、`lineStats`、`lineIntros`、`timeAttack`、`recentQuestions`、`recentRush`、`history` をそのまま `courses.g1` へ移す。
 4. 旧履歴に `gradeId: 'g1'` を補完し、既存のstage ID、line ID、時刻、成績は変更しない。
-5. `currentGrade: 'g1'` とし、`grades.g2` は空の初期値で作る。
+5. `activeCourseId: 'g1'` とし、`courses.g2` は空の初期値で作る。移行後は一度コース選択を表示する。
 6. 同じv4データへ複数回 `migrateState` を行っても値が変わらないようにする。
 7. 保存データのversionがアプリより新しい場合は上書き保存せず、「アプリの更新が必要」と扱う。
 8. 初回v4移行時は、生のv3を一度だけ別キーへバックアップする。
 
 ## セッションと履歴
 
-次へ必ず `gradeId` を追加する。
+次へ必ず `courseId` と `gradeId` を追加する。
 
 - 通常ステージのsession
 - タイムアタックのsession
@@ -116,7 +116,7 @@ isUnlocked(state, gradeId, lineId, stageId)
 
 ## 学年選択画面
 
-- ホーム上部に `1ねんせい | 2ねんせい` の切替を置く
+- 専用のコース選択画面に、現在遊べる `1年生 | 2年生` を置く
 - 初回と既存ユーザーの初期値は小学1年生
 - 前回選んだ学年と、その学年内の `lastLine` を復元する
 - プレイ中は学年切替を隠すか、中断確認を出す
@@ -162,7 +162,7 @@ const BUILDERS = {
 
 ### 1. 学年レジストリと回帰の固定
 
-- 現行G1を `CURRICULA.g1` へ包む
+- 現行G1を `COURSES.g1` へ包む
 - 既存 `LINES` / `LINE_ORDER` は互換aliasとして維持
 - G1の66 stage ID、6,336問生成、全完走、198印、6ラインのタイムアタックを固定テストする
 
@@ -192,9 +192,9 @@ const BUILDERS = {
 
 ### 6. PWA更新
 
-- `grade2-curriculum.js` を実行時に統合する段階でキャッシュ対象へ追加
-- Service Workerのキャッシュ名を更新
-- manifestとホーム文言を「小学1・2年生」へ更新
+- `grade2-curriculum.js` とG2 runtime、`course-core.js` をキャッシュ対象へ追加済み
+- Service Workerのキャッシュ名をv5へ更新済み
+- manifestとホーム文言を「小学1・2年生」へ更新済み
 - HTTPSで更新切替とオフライン起動を確認
 
 ## 必須テスト
@@ -210,7 +210,7 @@ const BUILDERS = {
 | 学年UI | 切替、前回位置、動的総数、図鑑、保護者表示が正しい |
 | PWA | 新規資産、キャッシュ切替、オフライン起動、旧キャッシュ限定削除が正しい |
 
-## 今回できているところ
+## 実装済み
 
 - 文科省と令和6年度版教科書3社の集約
 - 二年生6ライン・66ステージの正規化
@@ -219,5 +219,8 @@ const BUILDERS = {
 - 各ライン12枠のタイムアタック配分
 - 年間おすすめ順
 - メタデータ単体検査 `tests/grade2-curriculum-smoke.mjs`
-
-まだ公開版へ入れていないものは、state v4、学年選択UI、二年生の実問題ビルダーである。小学1年生を確認中の段階では、ここを一度に混ぜず、回帰テストを先に固定してから進める。
+- `COURSES.g1/g2` とstate v4、旧記録の一度限りのバックアップ
+- コース選択、二年生からの直接開始、区画・ステージのストーリー導入
+- 二年生6ライン・全66ステージの実問題ビルダー
+- 二年生6ラインの12問制タイムアタック
+- `tests/smoke-v14.mjs` による全66完走、198印、学年間分離、移行、PWA統合検査

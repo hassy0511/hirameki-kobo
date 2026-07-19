@@ -292,7 +292,7 @@ for (const pattern of [
 const manifest = JSON.parse(fs.readFileSync(new URL('manifest.json', rootUrl), 'utf8'));
 assert.equal(manifest.display, 'standalone', 'manifestがstandalone表示ではありません');
 assert.equal(manifest.scope, './', 'manifestのscopeが不正です');
-assert(manifest.description.includes('66ステージ'), 'manifestに全66ステージが反映されていません');
+assert(manifest.description.includes('132ステージ'), 'manifestに1・2年生の全132ステージが反映されていません');
 for (const size of [192, 512]) {
   const icon = manifest.icons.find(item => item.src === 'icon-' + size + '.png');
   assert(icon, size + 'pxのPNGアイコンがありません');

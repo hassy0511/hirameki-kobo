@@ -1,10 +1,14 @@
 const CACHE_PREFIX = 'hirameki-kobo-';
-const CACHE_NAME = 'hirameki-kobo-v4';
+const CACHE_NAME = 'hirameki-kobo-v5';
 const APP_FILES = [
   './',
   './index.html',
   './styles.css',
   './game-core.js',
+  './grade2-curriculum.js',
+  './grade2-runtime-arithmetic.js',
+  './grade2-runtime-world.js',
+  './course-core.js',
   './app.js',
   './manifest.json',
   './icon-192.png',

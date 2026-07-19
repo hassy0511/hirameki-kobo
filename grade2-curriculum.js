@@ -746,15 +746,16 @@
   ]);
 
   const IMPLEMENTATION_GATE = Object.freeze({
-    runtimeStatus: 'metadata-ready',
-    requiredBeforeActivation: [
-      'CURRICULA.g1/g2の学年レジストリ',
+    runtimeStatus: 'playable',
+    requiredBeforeActivation: [],
+    completed: [
+      'g1/g2コースレジストリ',
       'state v4への学年別保存移行',
-      'gradeIdを含む問題生成・履歴・タイムアタック',
+      'courseId・gradeId付きの問題生成・履歴・タイムアタック',
       '既存G1・66ステージの完全回帰テスト',
-      'G2問題ビルダーと全完走テスト'
+      'G2・66ステージの問題ビルダーと全完走テスト'
     ],
-    note: 'このファイルはG1公開版へまだ読み込ませない。学年間の記録分離が完成してから有効化する。'
+    note: 'index.htmlから実行時に読み込み、コース選択から小学2年生を直接開始できる。'
   });
 
   function validateCurriculum() {
@@ -791,8 +792,8 @@
   const CURRICULUM = Object.freeze({
     id: GRADE_ID,
     label: '小学2年生 算数',
-    version: 1,
-    status: 'curriculum-and-stage-metadata-ready',
+    version: 2,
+    status: 'playable-runtime-ready',
     standardHours: 175,
     lineOrder: LINE_ORDER,
     lines: LINES,
