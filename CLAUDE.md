@@ -16,10 +16,11 @@
 
 - 世界観と体験：`WORLD_BIBLE_V11.md`
 - ゲーム仕様：`GAME_SPEC.md`
-- 学習順序：`docs/curriculum_math_g1_addition.md`
+- 足し算の学習順序：`docs/curriculum_math_g1_addition.md`
+- 引き算の学習順序：`docs/curriculum_math_g1_subtraction.md`
 - ステージ一覧：`docs/stage_overview.md`
 
-この4ファイルとユーザーの最新指示が食い違う場合は、ユーザーの最新指示を優先する。
+この5ファイルとユーザーの最新指示が食い違う場合は、ユーザーの最新指示を優先する。
 
 ## してはいけないこと
 
