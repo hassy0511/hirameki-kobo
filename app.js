@@ -4,6 +4,7 @@
   const C = global.HiramekiCore;
   if (!C) throw new Error('HiramekiCore is required');
   const K = global.HiramekiCourses || null;
+  const S = global.HiramekiStory || null;
 
   const {
     STAGE_ROUNDS,
@@ -31,12 +32,17 @@
   let LINE_ORDER = course.lineOrder;
   let state = K ? K.courseState(rootState, activeCourseId) : rootState;
   syncStateShell();
+  const storyRefreshNeeded = Boolean(S && Number(rootState.settings && rootState.settings.storyRevision || 0) < S.STORY_VERSION);
+  const returningForStoryRefresh = Boolean(rootState.introSeen && storyRefreshNeeded);
   let ui = {
     screen: K && !rootState.courseChosen ? 'courses' : 'home',
     modal: null,
-    openingStep: rootState.introSeen ? null : 0,
+    openingStep: rootState.introSeen && !storyRefreshNeeded ? null : 0,
     courseIntroStep: null,
+    lineIntroStep: null,
+    lineIntroId: null,
     stageIntro: null,
+    courseFinaleStep: null,
     lineId: LINES[state.lastLine] ? state.lastLine : 'number',
     islandId: LINES[state.lastLine] ? state.lastLine : 'number',
     result: null
@@ -92,6 +98,10 @@
     syncStateShell();
     ui.lineId = LINES[state.lastLine] ? state.lastLine : LINE_ORDER[0];
     ui.islandId = ui.lineId;
+    ui.lineIntroStep = null;
+    ui.lineIntroId = null;
+    ui.stageIntro = null;
+    ui.courseFinaleStep = null;
     return true;
   }
 
@@ -184,6 +194,48 @@
     return '--accent:' + line.accent + ';--line-pale:' + line.pale + ';';
   }
 
+  function storyKey(kind, id, courseId) {
+    return S ? S.storyKey(kind, courseId || activeCourseId, id) : String(id || kind);
+  }
+
+  function hasStoryBeat(kind, id, courseId) {
+    if (!state.storySeen) return false;
+    return Boolean(state.storySeen[storyKey(kind, id, courseId)]);
+  }
+
+  function markStoryBeat(kind, id, courseId) {
+    state.storySeen = state.storySeen || {};
+    state.storySeen[storyKey(kind, id, courseId)] = true;
+  }
+
+  function activeCourseStory() {
+    return S ? S.courseStory(activeCourseId) : null;
+  }
+
+  function activeLineStory(lineId) {
+    return S ? S.lineStory(activeCourseId, lineId || ui.lineId) : null;
+  }
+
+  function storyText(value) {
+    return storyTextFor(activeCourseId, value);
+  }
+
+  function storyTextFor(courseId, value) {
+    return S && S.childCopy ? S.childCopy(courseId, value) : String(value == null ? '' : value);
+  }
+
+  function completedLineCount() {
+    return LINE_ORDER.filter(function (lineId) { return lineComplete(lineId); }).length;
+  }
+
+  function courseComplete() {
+    return completedLineCount() === LINE_ORDER.length;
+  }
+
+  if (S && ui.openingStep == null && courseComplete() && activeCourseStory() && activeCourseStory().finale && !hasStoryBeat('course-complete', 'main', activeCourseId)) {
+    ui.courseFinaleStep = 0;
+  }
+
   function playTone(kind) {
     if (!state.settings.sound) return;
     try {
@@ -272,7 +324,7 @@
     }
     const line = lineFor(ui.lineId);
     const stageIndex = nextStageIndex(line.id);
-    return { line, stage: line.stages[stageIndex], stageIndex };
+    return { line, stage: line.stages[stageIndex], stageIndex, completed: courseComplete() };
   }
 
   function renderCourses() {
@@ -282,10 +334,14 @@
       const saved = K.courseState(rootState, courseId);
       const total = item.lineOrder.reduce(function (sum, lineId) { return sum + item.lines[lineId].stages.length; }, 0);
       const cleared = item.lineOrder.reduce(function (sum, lineId) { return sum + K.clearedCount(saved, courseId, lineId); }, 0);
+      const courseStory = S ? S.courseStory(courseId) : null;
+      const statusNames = courseStory && courseStory.statusNames || ['まだ暗い', '修理中', '区画復旧'];
+      const status = cleared === 0 ? statusNames[0] : cleared === total ? statusNames[2] : statusNames[1];
       return [
         '<article class="course-card ', activeCourseId === courseId && rootState.courseChosen ? 'active' : '', '" style="--accent:', item.accent, ';--line-pale:', item.pale, '">',
         '<div class="course-number">', item.symbol, '</div><div class="eyebrow">', esc(item.chapterNo), '</div>',
-        '<h2>', esc(item.label), '</h2><h3>', esc(item.chapter), '</h3><p>', esc(item.premise), '</p>',
+        '<h2>', esc(item.label), '</h2><h3>', esc(storyTextFor(courseId, item.chapter)), '</h3><p>', esc(storyTextFor(courseId, courseStory && courseStory.mission || item.premise)), '</p>',
+        '<div class="story-status"><span class="story-status-dot"></span><strong>', esc(storyTextFor(courseId, status)), '</strong></div>',
         '<div class="progress-track"><div class="progress-fill" style="--progress:', Math.round(cleared / total * 100), '%"></div></div>',
         '<div class="line-progress-copy"><span>', cleared, ' / ', total, ' しゅうり</span><span>', item.lineOrder.length, 'ライン</span></div>',
         '<button class="primary-button" data-action="choose-course" data-course="', courseId, '">', cleared ? 'このコースを つづける' : 'このコースを はじめる', ' →</button>',
@@ -294,7 +350,7 @@
     }).join('');
     return shell([
       '<main class="page course-page"><section class="course-heading"><div class="eyebrow">CHOOSE YOUR COURSE</div>',
-      '<h1>どの区画を しゅうりする？</h1><p>学年はいつでも切り替えられます。二年生から始めても大丈夫です。</p></section>',
+      '<h1>どの くかくを しゅうりする？</h1><p>学年はいつでも切り替えられます。二年生から始めても大丈夫です。</p></section>',
       '<section class="course-grid">', cards, '</section></main>'
     ].join(''), 'courses');
   }
@@ -303,6 +359,9 @@
     const mission = recommendedMission();
     const totalCleared = LINE_ORDER.reduce(function (sum, lineId) { return sum + clearedCount(lineId); }, 0);
     const totalStages = LINE_ORDER.reduce(function (sum, lineId) { return sum + lineFor(lineId).stages.length; }, 0);
+    const completedLines = completedLineCount();
+    const progressStory = S ? S.progressStory(activeCourseId, totalCleared, totalStages, completedLines) : null;
+    const currentCourseStory = activeCourseStory();
     const lamps = Array.from({ length: 12 }, function (_, index) {
       return '<span class="machine-lamp ' + (index < Math.round(totalCleared / totalStages * 12) ? 'on' : '') + '"></span>';
     }).join('');
@@ -313,10 +372,12 @@
       const nextIndex = nextStageIndex(lineId);
       const next = line.stages[nextIndex];
       const rush = state.timeAttack[lineId] || {};
+      const lineStory = activeLineStory(lineId);
       return [
         '<article class="line-card" style="', lineStyle(line), '">',
         '<div class="line-card-top"><span class="line-symbol">', esc(line.symbol), '</span><div><div class="eyebrow">LEARNING LINE</div><h3>', esc(line.name), '</h3></div></div>',
-        '<p>', esc(line.description), '</p>',
+        lineStory ? '<div class="line-story-label"><span>' + esc(storyText(lineStory.system)) + '</span><strong>' + esc(storyText(lineStory.power)) + '</strong></div>' : '',
+        '<p>', esc(storyText(lineStory && lineStory.mission || line.description)), '</p>',
         '<div class="progress-track"><div class="progress-fill" style="--progress:', Math.round(count / line.stages.length * 100), '%"></div></div>',
         '<div class="line-progress-copy"><span>', count, ' / ', line.stages.length, ' しゅうり</span><span>', totalMarks(lineId), ' / ', line.stages.length * 3, ' ひらめき印</span></div>',
         '<div class="line-card-actions">',
@@ -330,12 +391,17 @@
     return shell([
       '<main class="page">',
       '<section class="hero" style="', lineStyle(mission.line), '">',
-      '<div class="hero-copy"><div class="eyebrow">', esc(course.chapterNo), '・', esc(course.label), '</div><h1>', esc(state.workshopName || 'ひらめき'), '工房、<br>', esc(course.chapter), 'へ。</h1>',
-      '<p>', esc(course.premise), '</p>',
-      '<div class="hero-actions"><button class="primary-button" style="', lineStyle(mission.line), '" data-action="start-recommended" data-line="', mission.line.id, '" data-stage="', mission.stageIndex, '">', esc(mission.stage.name), 'を はじめる →</button>',
+      '<div class="hero-copy"><div class="eyebrow">', esc(course.chapterNo), '・', esc(course.label), '</div><h1>', esc(state.workshopName || 'ひらめき'), '工房、<br>', esc(storyText(course.chapter)), 'へ。</h1>',
+      '<p>', esc(storyText(currentCourseStory && currentCourseStory.mission || course.premise)), '</p>',
+      progressStory ? '<div class="story-progress-copy"><small>' + esc(storyText(progressStory.label)) + '</small><strong>' + esc(storyText(progressStory.title)) + '</strong><span>' + esc(storyText(progressStory.text)) + '</span></div>' : '',
+      '<div class="hero-actions">', mission.completed && currentCourseStory && currentCourseStory.finale ? '<button class="primary-button" style="' + lineStyle(mission.line) + '" data-action="show-course-finale">くかくの かんせいを みる →</button>' : '<button class="primary-button" style="' + lineStyle(mission.line) + '" data-action="start-recommended" data-line="' + mission.line.id + '" data-stage="' + mission.stageIndex + '">' + esc(mission.stage.name) + 'を はじめる →</button>',
       '<button class="soft-button" data-nav="map">', LINE_ORDER.length, 'つのラインを見る</button></div></div>',
-      '<div class="hero-machine"><div class="machine-title"><span>ルミナ復旧パネル</span><b>', totalCleared, ' / ', totalStages, '</b></div><div class="machine-lamps">', lamps, '</div><div class="machine-conveyor"></div>',
-      '<p class="muted">ラインを修理すると、ここへエネルギーが集まります。</p></div>',
+      '<div class="hero-machine"><div class="machine-title"><span>ルミナ復旧パネル</span><b>', totalCleared, ' / ', totalStages, '</b></div><div class="machine-lamps">', lamps, '</div><div class="lumina-cores">', LINE_ORDER.map(function (lineId) {
+        const line = lineFor(lineId);
+        const story = activeLineStory(lineId);
+        return '<div class="lumina-core ' + (lineComplete(lineId) ? 'on' : clearedCount(lineId) ? 'working' : '') + '" style="' + lineStyle(line) + '"><span>' + esc(line.symbol) + '</span><small>' + esc(storyText(story ? story.power : line.short)) + '</small></div>';
+      }).join(''), '</div><div class="machine-conveyor"></div>',
+      '<p class="muted">11個のパーツで一つのコアが完成。六つのコアをルミナへつなぎます。</p></div>',
       '</section>',
       '<div class="section-heading"><div><div class="eyebrow">', LINE_ORDER.length, ' LEARNING LINES</div><h2>学習ラインを えらぶ</h2></div><p>どのラインもステージ1から始められます。</p></div>',
       '<section class="line-grid">', lineCards, '</section>',
@@ -354,6 +420,7 @@
     const line = lineFor();
     const count = clearedCount(line.id);
     const complete = lineComplete(line.id);
+    const lineStory = activeLineStory(line.id);
     const zones = line.zones.map(function (zone) {
       const cards = line.stages.slice(zone.range[0], zone.range[1] + 1).map(function (stage, localIndex) {
         const index = zone.range[0] + localIndex;
@@ -375,7 +442,9 @@
       : '<button class="soft-button heading-action" disabled>' + line.stages.length + 'ステージ完了でタイムアタック</button>';
     return shell([
       '<main class="page">', lineTabs(),
-      '<section class="page-heading-card" style="', lineStyle(line), '"><span class="heading-symbol">', esc(line.symbol), '</span><div><div class="eyebrow">REPAIR BLUEPRINT</div><h1>', esc(line.name), '</h1><p>', esc(line.description), '　', count, '/', line.stages.length, ' 修理済み</p></div>', rushAction, '</section>',
+      '<section class="page-heading-card" style="', lineStyle(line), '"><span class="heading-symbol">', esc(line.symbol), '</span><div><div class="eyebrow">REPAIR BLUEPRINT</div><h1>', esc(line.name), '</h1>',
+      lineStory ? '<div class="line-story-label"><span>' + esc(storyText(lineStory.system)) + '</span><strong>' + esc(storyText(lineStory.power)) + '</strong></div>' : '',
+      '<p>', esc(storyText(lineStory && lineStory.mission || line.description)), '　', count, '/', line.stages.length, ' 修理済み</p>', lineStory ? '<button class="story-link" data-action="replay-line-story" data-line="' + attr(line.id) + '">トトとモクモの作戦をみる</button>' : '', '</div>', rushAction, '</section>',
       '<div class="zones">', zones, '</div>',
       '</main>'
     ].join(''), 'map');
@@ -415,7 +484,12 @@
     ui.islandId = targetLine.id;
     ui.screen = 'game';
     ui.result = null;
-    ui.stageIntro = state.storySeen && !state.storySeen[stage.id] ? stage.id : null;
+    const stageBeat = storyKey('stage', stage.id, activeCourseId);
+    ui.stageIntro = state.storySeen && !state.storySeen[stageBeat] ? stage.id : null;
+    if (activeLineStory(targetLine.id) && !hasStoryBeat('line', targetLine.id, activeCourseId)) {
+      ui.lineIntroId = targetLine.id;
+      ui.lineIntroStep = 0;
+    }
     saveState();
     playTone('tap');
     render();
@@ -423,14 +497,15 @@
   }
 
   function machinePanel(line, stage, completed) {
+    const lineStory = activeLineStory(line.id);
     const energy = Array.from({ length: 5 }, function (_, index) {
       return '<span class="energy-cell ' + (index < Math.ceil(completed / STAGE_ROUNDS * 5) ? 'on' : '') + '"></span>';
     }).join('');
     return [
       '<aside class="mission-machine" style="', lineStyle(line), '"><div class="machine-face">',
-      '<div class="machine-screen"><div><small>REPAIR PART</small><strong>', esc(stage.symbol), ' ', esc(stage.part), '</strong></div></div>',
+      '<div class="machine-screen"><div><small>', esc(storyText(lineStory ? lineStory.system : 'REPAIR PART')), '</small><strong>', esc(stage.symbol), ' ', esc(stage.part), '</strong></div></div>',
       '<div class="energy-row">', energy, '</div><div class="machine-gears"><span>⚙</span><span>⚙</span></div>',
-      '<p class="muted">正解すると装置へエネルギーが届きます。</p>',
+      '<p class="muted">正解すると、', esc(storyText(lineStory ? lineStory.power : '装置')), 'の回路へエネルギーが届きます。</p>',
       '</div></aside>'
     ].join('');
   }
@@ -813,6 +888,10 @@
       at: new Date().toISOString()
     });
     state.history = state.history.slice(-240);
+    const firstLineComplete = firstClear && lineComplete(line.id);
+    const completedLines = completedLineCount();
+    const courseCompleted = completedLines === LINE_ORDER.length;
+    if (firstLineComplete) markStoryBeat('line-complete', line.id, activeCourseId);
     ui.result = {
       mode: 'standard',
       courseId: activeCourseId,
@@ -825,7 +904,11 @@
       cleared,
       elapsed,
       firstClear,
-      lineCompleted: lineComplete(line.id)
+      lineCompleted: lineComplete(line.id),
+      firstLineComplete,
+      completedLines,
+      courseCompleted,
+      firstCourseComplete: firstClear && courseCompleted
     };
     ui.screen = 'result';
     session = null;
@@ -840,6 +923,9 @@
     if (!result) return renderHome();
     const line = lineFor(result.lineId);
     const stage = line.stages[result.stageIndex];
+    const lineStory = activeLineStory(line.id);
+    const stageStory = S ? S.stageStory(activeCourseId, line.id, result.stageIndex, stage) : null;
+    const zoneIndex = line.zones.findIndex(function (zone) { return Number(zone.range[1]) === result.stageIndex; });
     const next = result.stageIndex + 1;
     const nextButton = result.cleared && next < line.stages.length
       ? '<button class="primary-button" style="' + lineStyle(line) + '" data-stage="' + next + '">つぎのステージ →</button>'
@@ -847,10 +933,12 @@
     return shell([
       '<main class="result-card" style="', lineStyle(line), '"><div class="result-burst">', result.cleared ? esc(stage.symbol) : '↻', '</div>',
       '<div class="eyebrow">REPAIR REPORT</div><h1>', result.cleared ? 'しゅうり かんりょう！' : 'もういちど ためそう', '</h1>',
-      '<p>', result.cleared ? esc(stage.part) + 'を取り付けました。考えたことが装置の動きになったね。' : '5問正解で修理完了。ヒントを使って、もう一度動かしてみよう。', '</p>',
-      result.firstClear ? '<div class="rush-unlock">✦ ' + esc(course.chapter) + 'の「' + esc(stage.name) + '」が動き出しました。ルミナの明かりが一つ戻った！</div>' : '',
+      '<p>', result.cleared ? esc(stage.part) + 'を取り付けました。考えたことが装置の動きになったね。' : '装置はまだ点滅中。5問正解すると修理できます。トトのヒントでもう一度見てみよう。', '</p>',
+      result.firstClear && stageStory ? '<section class="world-change-card"><div class="eyebrow">WORKSHOP UPDATE</div><h2>' + esc(stage.name) + 'が動いた！</h2><p>' + esc(storyText(stageStory.effect)) + '</p></section>' : result.cleared ? '<div class="adjustment-note">調整完了。前よりなめらかに動いた！</div>' : '',
+      result.firstClear && zoneIndex >= 0 && lineStory ? '<div class="zone-story-update"><strong>さぎょうくかく クリア</strong><span>' + esc(storyText(lineStory.zoneEffects[zoneIndex])) + '</span></div>' : '',
       '<div class="score-grid"><div class="score-box"><strong>', result.score, ' / 8</strong><small>さいしょの正解</small></div><div class="score-box"><strong>', marksText(result.stars), '</strong><small>ひらめき印</small></div><div class="score-box"><strong>', result.elapsed, '秒</strong><small>しゅうり時間</small></div></div>',
-      result.lineCompleted ? '<div class="rush-unlock">⚡ ' + esc(line.name) + 'の タイムアタックが ひらきました！</div>' : '',
+      result.firstLineComplete ? (lineStory ? '<section class="line-complete-story"><div class="core-assembly"><span>' + esc(line.symbol) + '</span><span>＋</span><b>CORE</b></div><div><div class="eyebrow">LINE RESTORED・11 / 11</div><h2>' + esc(storyText(lineStory.completeTitle)) + '</h2><p>' + esc(storyText(lineStory.completeText)) + '</p><small>⚡ 修理後の高速点検「タイムアタック」がひらきました。</small></div></section>' : '<div class="rush-unlock">⚡ ' + esc(line.name) + 'の タイムアタックが ひらきました！</div>') : '',
+      result.firstCourseComplete && activeCourseStory() && activeCourseStory().finale ? '<section class="course-complete-teaser"><strong>六つのコアがそろった！</strong><span>ルミナを さいごまで うごかそう。</span><button class="secondary-button" data-action="show-course-finale">くかくの かんせいを みる →</button></section>' : '',
       '<div class="button-row" style="justify-content:center;margin-top:22px"><button class="soft-button" data-action="retry-stage" data-stage="', result.stageIndex, '">もういちど</button>', nextButton,
       result.lineCompleted ? '<button class="secondary-button" data-action="start-rush" data-line="' + line.id + '">⚡ タイムアタック</button>' : '', '</div>',
       '<div class="button-row" style="justify-content:center;margin-top:16px"><span class="muted">どんな気分？</span><button class="soft-button compact-button" data-mood="fun" data-stage-id="', stage.id, '">たのしい</button><button class="soft-button compact-button" data-mood="okay" data-stage-id="', stage.id, '">できた</button><button class="soft-button compact-button" data-mood="hard" data-stage-id="', stage.id, '">むずかしい</button></div>',
@@ -983,8 +1071,9 @@
   function renderRush() {
     if (!session || session.mode !== 'timeAttack') return renderHome();
     const line = lineFor(session.lineId);
+    const lineStory = activeLineStory(line.id);
     if (!session.startedAt) {
-      return '<main class="rush-shell" style="' + lineStyle(line) + '"><section class="rush-ready"><div class="rush-ready-inner"><div class="result-burst">⚡</div><div class="eyebrow">HIRAMEKI TIME ATTACK</div><h1>' + esc(line.name) + '</h1><p style="color:#dfe8ff">12ミッションの合計タイムに挑戦。ミスすると3秒加算されます。問題は毎回ランダムです。</p><div class="score-grid"><div class="score-box"><strong>12問</strong><small>ランダムミッション</small></div><div class="score-box"><strong>＋3秒</strong><small>ミス1回</small></div><div class="score-box"><strong>' + C.formatTimeMs(state.timeAttack[line.id].bestMs) + '</strong><small>自己ベスト</small></div></div><div class="button-row" style="justify-content:center"><button class="soft-button" data-action="cancel-rush">もどる</button><button class="secondary-button" data-action="begin-rush">スタート！</button></div></div></section></main>';
+      return '<main class="rush-shell" style="' + lineStyle(line) + '"><section class="rush-ready"><div class="rush-ready-inner"><div class="result-burst">⚡</div><div class="eyebrow">RESTORED LINE CHECK・HIRAMEKI TIME ATTACK</div><h1>' + esc(line.name) + ' 高速点検</h1><p style="color:#dfe8ff">' + esc(storyText(lineStory ? lineStory.rushMission : '修理した装置を12ミッションで点検しよう。')) + ' ミスは3秒加算。自分の記録へ何度でも挑戦できます。</p><div class="score-grid"><div class="score-box"><strong>12問</strong><small>ランダム点検</small></div><div class="score-box"><strong>＋3秒</strong><small>ミス1回</small></div><div class="score-box"><strong>' + C.formatTimeMs(state.timeAttack[line.id].bestMs) + '</strong><small>自己ベスト</small></div></div><div class="button-row" style="justify-content:center"><button class="soft-button" data-action="cancel-rush">もどる</button><button class="secondary-button" data-action="begin-rush">点検スタート！</button></div></div></section></main>';
     }
     const question = currentQuestion();
     return [
@@ -999,9 +1088,10 @@
     const result = ui.result;
     if (!result || result.mode !== 'timeAttack') return renderHome();
     const line = lineFor(result.lineId);
+    const lineStory = activeLineStory(line.id);
     return shell([
       '<main class="result-card" style="', lineStyle(line), '"><div class="result-burst">⚡</div><div class="eyebrow">TIME ATTACK COMPLETE</div>',
-      '<h1>', result.isBest ? 'じこベスト！' : '12ミッション かんりょう！', '</h1><p>', esc(line.name), 'の装置を一気に動かしました。</p>',
+      '<h1>', result.isBest ? 'じこベスト！' : '12ミッション かんりょう！', '</h1><p>', esc(line.name), 'の高速点検が完了。', esc(storyText(lineStory ? lineStory.system : '装置')), 'は安定して動いています。</p>',
       '<div class="score-grid"><div class="score-box"><strong>', C.formatTimeMs(result.rawMs), '</strong><small>操作タイム</small></div><div class="score-box"><strong>＋', Math.round(result.mistakes * 3), '秒</strong><small>ミス ', result.mistakes, '回</small></div><div class="score-box"><strong>', C.formatTimeMs(result.officialMs), '</strong><small>公式タイム</small></div></div>',
       '<div class="rush-unlock">自己ベスト　', C.formatTimeMs(result.bestMs), '</div>',
       '<div class="button-row" style="justify-content:center;margin-top:22px"><button class="soft-button" data-nav="home">工房へ</button><button class="secondary-button" data-action="start-rush" data-line="', line.id, '">もういちど 挑戦</button></div></main>'
@@ -1013,7 +1103,8 @@
     const cards = LINE_ORDER.map(function (lineId) {
       const line = lineFor(lineId);
       const count = clearedCount(lineId);
-        return '<article class="collection-card" style="' + lineStyle(line) + '"><div class="line-card-top"><span class="line-symbol">' + esc(line.symbol) + '</span><div><h3>' + esc(line.name) + '</h3><small>' + count + ' / ' + line.stages.length + ' パーツ</small></div></div><div class="parts-grid">' + line.stages.map(function (stage) {
+      const lineStory = activeLineStory(lineId);
+        return '<article class="collection-card" style="' + lineStyle(line) + '"><div class="line-card-top"><span class="line-symbol">' + esc(line.symbol) + '</span><div><h3>' + esc(line.name) + '</h3><small>' + count + ' / ' + line.stages.length + ' パーツ</small></div></div>' + (lineStory ? '<div class="collection-core ' + (count === line.stages.length ? 'on' : '') + '"><span>' + (count === line.stages.length ? '◆' : count + '/11') + '</span><div><small>' + esc(storyText(lineStory.system)) + '</small><strong>' + (count === line.stages.length ? esc(storyText(lineStory.completeTitle)) : 'パーツをつないでいるところ') + '</strong></div></div>' : '') + '<div class="parts-grid">' + line.stages.map(function (stage) {
         const on = Boolean(state.parts[stage.id]);
         return '<div class="part-chip ' + (on ? 'on' : '') + '"><b>' + (on ? esc(stage.symbol) : '?') + '</b>' + (on ? esc(stage.part) : 'まだ ひみつ') + '</div>';
       }).join('') + '</div></article>';
@@ -1042,35 +1133,60 @@
 
   function renderOpening() {
     if (ui.openingStep == null) return '';
-    const scenes = [
-      { icon: '🦊', speaker: 'トト', title: 'ルミナの あかりが きえちゃった！', text: 'そらのまちの そうちが、あちこちで とまっているんだ。' },
-      { icon: '🤖', speaker: 'モクモ', title: 'なおすボタンだけでは うごきません。', text: '見て、分けて、組み立てて。きみの ひらめきが エネルギーになります。' },
+    const scenes = S ? (returningForStoryRefresh ? S.RETURNING_OPENING : S.OPENING) : [
+      { icon: '🦊', speaker: 'トト', title: 'ルミナが とまった！', text: '工房の学習ラインへ送っていた光が消えてしまったんだ。' },
+      { icon: '🤖', speaker: 'モクモ', title: 'なおすボタンだけでは うごきません。', text: '見て、分けて、組み立てて。きみのひらめきがエネルギーになります。' },
       { icon: '⚡', speaker: 'トト', title: 'ひらめき工房を ひらこう。', text: '担当する学年の区画を選んで、ルミナの機能を一つずつ取り戻そう！' }
     ];
     if (ui.openingStep < scenes.length) {
       const scene = scenes[ui.openingStep];
-      return '<div class="overlay"><section class="opening-card" role="dialog" aria-modal="true"><div class="mascot">' + scene.icon + '</div><div><div class="eyebrow">' + scene.speaker + '</div><h2>' + scene.title + '</h2><p>' + scene.text + '</p><button class="primary-button" data-action="opening-next">つぎへ →</button></div></section></div>';
+      return '<div class="overlay"><section class="opening-card" role="dialog" aria-modal="true"><div class="mascot">' + esc(scene.icon) + '</div><div><div class="eyebrow">' + esc(scene.speaker) + '</div><h2>' + esc(storyTextFor('g1', scene.title)) + '</h2><p>' + esc(storyTextFor('g1', scene.text)) + '</p><button class="primary-button" data-action="opening-next">つぎへ →</button></div></section></div>';
     }
-    return '<div class="overlay"><section class="opening-card" role="dialog" aria-modal="true"><div class="mascot">🏭</div><div><div class="eyebrow">WORKSHOP NAME</div><h2>こうぼうの なまえを きめよう。</h2><label for="workshopNameInput">8もじまで</label><input id="workshopNameInput" class="name-input" maxlength="8" placeholder="ひらめき" value="' + esc(state.workshopName) + '"><button class="primary-button" data-action="finish-opening">この なまえで はじめる</button></div></section></div>';
+    if (returningForStoryRefresh) {
+      return '<div class="overlay"><section class="opening-card" role="dialog" aria-modal="true"><div class="mascot">🏭</div><div><div class="eyebrow">WORKSHOP RECORD SAFE</div><h2>' + esc(state.workshopName || 'ひらめき') + 'こうぼうへ おかえり！</h2><p>こうぼうの名前も、これまでのきろくも、そのままです。</p><button class="primary-button" data-action="finish-opening">このまま つづける →</button></div></section></div>';
+    }
+    return '<div class="overlay"><section class="opening-card" role="dialog" aria-modal="true"><div class="mascot">🏭</div><div><div class="eyebrow">NEW WORKSHOP MASTER</div><h2>おやかたの こうぼうに なまえをつけよう。</h2><p>この名前が、こうぼうのかんばんになります。</p><label for="workshopNameInput">8もじまで</label><input id="workshopNameInput" class="name-input" maxlength="8" placeholder="ひらめき" value="' + esc(state.workshopName) + '"><button class="primary-button" data-action="finish-opening">このこうぼうで しゅうりをはじめる</button></div></section></div>';
   }
 
   function renderCourseIntro() {
     if (ui.courseIntroStep == null || !K) return '';
-    const scenes = [
+    const courseStory = activeCourseStory();
+    const scenes = courseStory && courseStory.intro || [
       { icon: activeCourseId === 'g2' ? '🏗️' : '💡', speaker: 'トト', title: course.chapter + 'を たんとうしよう。', text: course.premise },
       { icon: '🤖', speaker: 'モクモ', title: LINE_ORDER.length + 'つの しゅうりラインを ひらきました。', text: 'どのラインも1番から始められます。まずは気になる装置を選んでください。' }
     ];
     const scene = scenes[Math.min(ui.courseIntroStep, scenes.length - 1)];
     const last = ui.courseIntroStep >= scenes.length - 1;
-    return '<div class="overlay"><section class="opening-card" role="dialog" aria-modal="true"><div class="mascot">' + scene.icon + '</div><div><div class="eyebrow">' + esc(scene.speaker) + '・' + esc(course.label) + '</div><h2>' + esc(scene.title) + '</h2><p>' + esc(scene.text) + '</p><button class="primary-button" data-action="' + (last ? 'finish-course-intro' : 'course-intro-next') + '">' + (last ? '区画へ はいる' : 'つぎへ') + ' →</button></div></section></div>';
+    return '<div class="overlay"><section class="opening-card" role="dialog" aria-modal="true"><div class="mascot">' + esc(scene.icon) + '</div><div><div class="eyebrow">' + esc(scene.speaker) + '・' + esc(course.label) + '</div><h2>' + esc(storyText(scene.title)) + '</h2><p>' + esc(storyText(scene.text)) + '</p><button class="primary-button" data-action="' + (last ? 'finish-course-intro' : 'course-intro-next') + '">' + (last ? 'くかくへ はいる' : 'つぎへ') + ' →</button></div></section></div>';
+  }
+
+  function renderLineIntro() {
+    if (ui.lineIntroStep == null || !ui.lineIntroId) return '';
+    const line = lineFor(ui.lineIntroId);
+    const story = activeLineStory(line.id);
+    if (!story || !story.intro.length) return '';
+    const scene = story.intro[Math.min(ui.lineIntroStep, story.intro.length - 1)];
+    const last = ui.lineIntroStep >= story.intro.length - 1;
+    return '<div class="overlay"><section class="opening-card line-opening" style="' + lineStyle(line) + '" role="dialog" aria-modal="true"><div class="mascot">' + esc(scene.icon) + '</div><div><div class="eyebrow">' + esc(scene.speaker) + '・' + esc(storyText(story.system)) + '</div><h2>' + esc(storyText(scene.title)) + '</h2><p>' + esc(storyText(scene.text)) + '</p><div class="line-mission-chip"><small>このラインで もどす力</small><strong>' + esc(storyText(story.power)) + '</strong></div><button class="primary-button" style="' + lineStyle(line) + '" data-action="' + (last ? 'finish-line-intro' : 'line-intro-next') + '">' + (last ? 'せっけいずを ひらく' : 'つぎへ') + ' →</button></div></section></div>';
   }
 
   function renderStageIntro() {
     if (!ui.stageIntro || !session || session.mode !== 'standard') return '';
     const line = lineFor(session.lineId);
     const stage = line.stages[session.stageIndex];
+    const lineStory = activeLineStory(line.id);
+    const stageStory = S ? S.stageStory(activeCourseId, line.id, session.stageIndex, stage) : null;
     const actionCopy = /[。！？]$/.test(stage.action) ? stage.action : stage.action + '。';
-    return '<div class="overlay"><section class="opening-card mission-opening" role="dialog" aria-modal="true"><div class="mascot">' + esc(stage.symbol) + '</div><div><div class="eyebrow">REPAIR MISSION ' + stage.n + '・トト</div><h2>' + esc(stage.name) + 'が とまっている！</h2><p>' + esc(actionCopy) + 'この装置を直して、' + esc(course.chapter) + 'へ明かりを戻そう。</p><button class="primary-button" style="' + lineStyle(line) + '" data-action="begin-stage">しゅうりを はじめる →</button></div></section></div>';
+    return '<div class="overlay"><section class="opening-card mission-opening" style="' + lineStyle(line) + '" role="dialog" aria-modal="true"><div class="mascot">' + esc(stage.symbol) + '</div><div><div class="eyebrow">REPAIR MISSION ' + stage.n + '・' + esc(storyText(lineStory ? lineStory.system : 'トト')) + '</div><h2>' + esc(stage.name) + 'を なおそう！</h2>' + (stageStory ? '<div class="stage-diagnosis"><strong>モクモの しらべたこと</strong><span>' + esc(storyText(stageStory.briefing)) + '</span></div>' : '') + '<p><strong>おやかたの さぎょう：</strong>' + esc(storyText(actionCopy)) + '</p><p class="muted">' + esc(storyText(lineStory ? 'このパーツで「' + lineStory.power + '」の回路を一つつなぎます。' : 'この装置を直して、工房へ明かりを戻そう。')) + '</p><button class="primary-button" style="' + lineStyle(line) + '" data-action="begin-stage">しゅうりを はじめる →</button></div></section></div>';
+  }
+
+  function renderCourseFinale() {
+    if (ui.courseFinaleStep == null) return '';
+    const story = activeCourseStory();
+    if (!story || !story.finale || !story.finale.length) return '';
+    const scene = story.finale[Math.min(ui.courseFinaleStep, story.finale.length - 1)];
+    const last = ui.courseFinaleStep >= story.finale.length - 1;
+    return '<div class="overlay"><section class="opening-card course-finale" role="dialog" aria-modal="true"><div class="mascot">' + esc(scene.icon) + '</div><div><div class="eyebrow">COURSE RESTORED・' + esc(scene.speaker) + '</div><h2>' + esc(storyText(scene.title)) + '</h2><p>' + esc(storyText(scene.text)) + '</p>' + (last ? '<div class="finale-emblem"><span>◆</span><div><small>RESTORE EMBLEM</small><strong>' + esc(storyText(story.finaleTitle)) + '</strong><p>' + esc(storyText(story.finaleText)) + '</p></div></div>' : '') + '<button class="primary-button" data-action="' + (last ? 'finish-course-finale' : 'course-finale-next') + '">' + (last ? 'こうぼうへ もどる' : 'ルミナを うごかす') + ' →</button></div></section></div>';
   }
 
   function renderOverlay() {
@@ -1082,7 +1198,9 @@
     }
     if (ui.openingStep != null) return renderOpening();
     if (ui.courseIntroStep != null) return renderCourseIntro();
+    if (ui.lineIntroStep != null) return renderLineIntro();
     if (ui.stageIntro) return renderStageIntro();
+    if (ui.courseFinaleStep != null) return renderCourseFinale();
     if (!ui.modal) return '';
     if (ui.modal === 'settings') {
       return '<div class="overlay"><section class="modal-card" role="dialog" aria-modal="true" aria-label="設定"><h2>せってい</h2><div class="setting-row"><span>おと</span><button class="toggle ' + (state.settings.sound ? 'on' : '') + '" data-action="toggle-sound">' + (state.settings.sound ? 'オン' : 'オフ') + '</button></div><div class="setting-row"><span>うごき</span><button class="toggle ' + (state.settings.motion ? 'on' : '') + '" data-action="toggle-motion">' + (state.settings.motion ? 'オン' : 'オフ') + '</button></div><div class="setting-row" style="display:block"><label for="renameInput">こうぼうの なまえ</label><input id="renameInput" class="name-input" maxlength="8" value="' + esc(state.workshopName) + '"></div><div class="button-row" style="margin-top:18px"><button class="soft-button" data-action="close-modal">とじる</button><button class="primary-button" data-action="save-settings">ほぞん</button></div>' + (!isStandalone() ? '<hr><button class="secondary-button" data-action="install-app">ホーム画面に追加</button>' : '') + '</section></div>';
@@ -1149,13 +1267,17 @@
     global.scrollTo(0, 0);
   }
 
-  function switchLine(lineId, goToMap) {
+  function switchLine(lineId, goToMap, forceStory) {
     if (!LINES[lineId]) return;
     ui.lineId = lineId;
     ui.islandId = lineId;
     state.lastLine = lineId;
     state.lastIsland = lineId;
     if (goToMap) ui.screen = 'map';
+    if (activeLineStory(lineId) && (forceStory || !hasStoryBeat('line', lineId, activeCourseId))) {
+      ui.lineIntroId = lineId;
+      ui.lineIntroStep = 0;
+    }
     saveState();
     playTone('tap');
     render();
@@ -1315,13 +1437,18 @@
     else if (action === 'opening-next') { ui.openingStep += 1; playTone('tap'); render(); }
     else if (action === 'finish-opening') {
       const input = document.getElementById('workshopNameInput');
-      state.workshopName = (input && input.value.trim() || 'ひらめき').slice(0, 8);
+      const existingName = state.workshopName || rootState.workshopName || 'ひらめき';
+      state.workshopName = (input && input.value.trim() || existingName).slice(0, 8);
       if (K) {
         rootState.workshopName = state.workshopName;
         rootState.introSeen = true;
         rootState.courseChosen = false;
+        if (S) rootState.settings.storyRevision = S.STORY_VERSION;
         ui.screen = 'courses';
-      } else state.introSeen = true;
+      } else {
+        state.introSeen = true;
+        if (S) state.settings.storyRevision = S.STORY_VERSION;
+      }
       ui.openingStep = null;
       saveState();
       playTone('finish');
@@ -1332,7 +1459,7 @@
       if (!activateCourse(actionNode.dataset.course)) return;
       ui.screen = 'home';
       ui.result = null;
-      ui.courseIntroStep = state.introSeen ? null : 0;
+      ui.courseIntroStep = S ? (hasStoryBeat('course', 'main', activeCourseId) ? null : 0) : (state.introSeen ? null : 0);
       saveState();
       playTone('finish');
       render();
@@ -1341,7 +1468,22 @@
     else if (action === 'course-intro-next') { ui.courseIntroStep += 1; playTone('tap'); render(); }
     else if (action === 'finish-course-intro') {
       state.introSeen = true;
+      if (S) markStoryBeat('course', 'main', activeCourseId);
       ui.courseIntroStep = null;
+      if (courseComplete() && activeCourseStory() && activeCourseStory().finale && !hasStoryBeat('course-complete', 'main', activeCourseId)) ui.courseFinaleStep = 0;
+      saveState();
+      playTone('finish');
+      render();
+    }
+    else if (action === 'line-intro-next') { ui.lineIntroStep += 1; playTone('tap'); render(); }
+    else if (action === 'finish-line-intro') {
+      const lineId = ui.lineIntroId;
+      if (lineId) {
+        state.lineIntros[lineId] = true;
+        markStoryBeat('line', lineId, activeCourseId);
+      }
+      ui.lineIntroStep = null;
+      ui.lineIntroId = null;
       saveState();
       playTone('finish');
       render();
@@ -1350,6 +1492,7 @@
       if (session) {
         const activeStage = lineFor(session.lineId).stages[session.stageIndex];
         state.storySeen[activeStage.id] = true;
+        markStoryBeat('stage', activeStage.id, activeCourseId);
         session.startedAt = Date.now();
       }
       ui.stageIntro = null;
@@ -1358,6 +1501,24 @@
       render();
     }
     else if (action === 'open-line') switchLine(actionNode.dataset.line, true);
+    else if (action === 'replay-line-story') switchLine(actionNode.dataset.line, true, true);
+    else if (action === 'show-course-finale') {
+      if (activeCourseStory() && activeCourseStory().finale) {
+        ui.courseFinaleStep = 0;
+        playTone('finish');
+        render();
+      }
+    }
+    else if (action === 'course-finale-next') { ui.courseFinaleStep += 1; playTone('finish'); render(); }
+    else if (action === 'finish-course-finale') {
+      markStoryBeat('course-complete', 'main', activeCourseId);
+      ui.courseFinaleStep = null;
+      ui.screen = 'home';
+      saveState();
+      playTone('finish');
+      render();
+      global.scrollTo(0, 0);
+    }
     else if (action === 'start-recommended') {
       switchLine(actionNode.dataset.line, false);
       startStage(Number(actionNode.dataset.stage), actionNode.dataset.line);
@@ -1395,7 +1556,7 @@
       state = K ? K.courseState(rootState, 'g1') : rootState;
       syncStateShell();
       session = null;
-      ui = { screen: K ? 'courses' : 'home', modal: null, openingStep: 0, courseIntroStep: null, stageIntro: null, lineId: LINE_ORDER[0], islandId: LINE_ORDER[0], result: null };
+      ui = { screen: K ? 'courses' : 'home', modal: null, openingStep: 0, courseIntroStep: null, lineIntroStep: null, lineIntroId: null, stageIntro: null, courseFinaleStep: null, lineId: LINE_ORDER[0], islandId: LINE_ORDER[0], result: null };
       render();
     }
     else if (action === 'install-app') requestInstall();

@@ -9,6 +9,7 @@ const sourceFiles = [
   'grade2-runtime-arithmetic.js',
   'grade2-runtime-world.js',
   'course-core.js',
+  'story-core.js',
   'app.js'
 ];
 const sources = {};
@@ -28,7 +29,7 @@ function loadRuntime() {
   const sandbox = { console };
   sandbox.globalThis = sandbox;
   vm.createContext(sandbox);
-  for (const filename of sourceFiles.slice(0, 5)) {
+  for (const filename of sourceFiles.slice(0, -1)) {
     new vm.Script(sources[filename], { filename }).runInContext(sandbox);
   }
   return sandbox;
@@ -40,18 +41,21 @@ const g2 = runtime.HiramekiGrade2Curriculum;
 const arithmetic = runtime.HiramekiGrade2ArithmeticRuntime;
 const world = runtime.HiramekiGrade2WorldRuntime;
 const courses = runtime.HiramekiCourses;
+const story = runtime.HiramekiStory;
 
 assert(g1, 'HiramekiCore が公開されませんでした');
 assert(g2, 'HiramekiGrade2Curriculum が公開されませんでした');
 assert(arithmetic, 'HiramekiGrade2ArithmeticRuntime が公開されませんでした');
 assert(world, 'HiramekiGrade2WorldRuntime が公開されませんでした');
 assert(courses, 'HiramekiCourses が公開されませんでした');
+assert(story, 'HiramekiStory が公開されませんでした');
 assert.equal(courses.STATE_VERSION, 4, '統合保存データは version 4 である必要があります');
 assert.deepEqual(Array.from(courses.COURSE_ORDER), ['g1', 'g2'], '公開コースはG1・G2の順である必要があります');
 assert.equal(courses.validate().ok, true, courses.validate().errors.join('\n'));
 assert.equal(g2.validate().ok, true, g2.validate().errors.join('\n'));
 assert.equal(arithmetic.validate().ok, true, arithmetic.validate().errors.join('\n'));
 assert.equal(world.validate().ok, true, world.validate().errors.join('\n'));
+assert.equal(story.validate(courses.COURSES).ok, true, story.validate(courses.COURSES).errors.join('\n'));
 
 const stagesByCourse = {};
 for (const courseId of courses.COURSE_ORDER) {
@@ -246,12 +250,13 @@ assert.equal(firstVisit.app.getUi().screen, 'courses', '初回はコース選択
 assert(firstVisit.appElement.innerHTML.includes('小学1年生 算数'), '初回画面にG1コースがありません');
 assert(firstVisit.appElement.innerHTML.includes('小学2年生 算数'), '初回画面にG2コースがありません');
 assert(/data-course="g2"/.test(firstVisit.appElement.innerHTML), 'G2を直接選ぶUIがありません');
-assert(firstVisit.appElement.innerHTML.includes('ルミナの あかりが きえちゃった'), '初回ストーリー導入がありません');
+assert(firstVisit.appElement.innerHTML.includes('ルミナが とまった'), '初回ストーリー導入がありません');
 
 const selectorState = courses.createDefaultState();
 selectorState.introSeen = true;
 selectorState.courseChosen = false;
 selectorState.workshopName = '統合テスト';
+selectorState.settings.storyRevision = story.STORY_VERSION;
 const selector = createAppHarness({ savedRaw: selectorState, seedStart: 800000 });
 assert.equal(selector.app.getUi().screen, 'courses', '導入後・未選択時はコース選択画面である必要があります');
 selector.dispatchAction('choose-course', { course: 'g2' });
@@ -263,11 +268,34 @@ selector.app.startStage(0, 'number');
 assert.equal(selector.app.getSession().courseId, 'g2', 'G1を経由せずG2ステージを開始できません');
 assert.equal(selector.app.getSession().questions.length, 8, 'G2直接開始時に8問生成されません');
 
+const g2StoryState = courses.createDefaultState();
+g2StoryState.introSeen = true;
+g2StoryState.courseChosen = true;
+g2StoryState.activeCourseId = 'g2';
+g2StoryState.settings.storyRevision = story.STORY_VERSION;
+g2StoryState.courses.g2.introSeen = true;
+g2StoryState.courses.g2.storySeen[story.storyKey('course', 'g2', 'main')] = true;
+for (const stage of g2Course.lines.number.stages.slice(0, 10)) {
+  g2StoryState.courses.g2.progress[stage.id] = { cleared: true, stars: 3, bestScore: 8 };
+  g2StoryState.courses.g2.parts[stage.id] = true;
+}
+const g2StoryHarness = createAppHarness({ savedRaw: g2StoryState, seedStart: 850000 });
+g2StoryHarness.dispatchAction('open-line', { line: 'number' });
+assert(!g2StoryHarness.appElement.innerHTML.includes('data-action="replay-line-story"'), 'G2設計図に未実装のライン物語ボタンが出ています');
+g2StoryHarness.app.startStage(10, 'number');
+for (let round = 0; round < 8; round += 1) {
+  const question = g2StoryHarness.app.getSession().questions[g2StoryHarness.app.getSession().cursor];
+  g2StoryHarness.app.handleAnswer(question.correct);
+  g2StoryHarness.app.nextQuestion();
+}
+assert(g2StoryHarness.appElement.innerHTML.includes('タイムアタックが ひらきました'), 'G2ライン初完走でタイムアタック解放が伝わりません');
+
 const playableState = courses.createDefaultState();
 playableState.introSeen = true;
 playableState.courseChosen = true;
 playableState.activeCourseId = 'g2';
 playableState.workshopName = '完走テスト';
+playableState.settings.storyRevision = story.STORY_VERSION;
 playableState.courses.g2.introSeen = true;
 const completion = createAppHarness({ savedRaw: playableState, seedStart: 900000 });
 assert.equal(completion.app.getActiveCourseId(), 'g2', '保存済みのG2選択が復元されません');
@@ -405,7 +433,7 @@ for (const filename of sourceFiles) {
 }
 assert(/132\s*ステージ/.test(html), 'index.html にG1/G2全132ステージが反映されていません');
 assert(manifest.description.includes('132ステージ'), 'manifest にG1/G2全132ステージが反映されていません');
-assert(/hirameki-kobo-v5/.test(sw), 'G2統合版でService Workerのキャッシュ世代が更新されていません');
+assert(/hirameki-kobo-v6/.test(sw), 'ストーリー統合版でService Workerのキャッシュ世代が更新されていません');
 
 console.log(
   'v14 smoke test: G1/G2 132 stages / G2 ' + generatedQuestions +
