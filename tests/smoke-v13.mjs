@@ -302,7 +302,7 @@ for (const size of [192, 512]) {
 }
 
 const sw = fs.readFileSync(new URL('sw.js', rootUrl), 'utf8');
-for (const asset of ['styles.css', 'game-core.js', 'app.js']) assert(sw.includes(asset), 'Service Workerに' + asset + 'がありません');
+for (const asset of ['styles.css', 'game-core.js', 'audio-core.js', 'app.js']) assert(sw.includes(asset), 'Service Workerに' + asset + 'がありません');
 assert(/event\.request\.mode\s*===\s*'navigate'/.test(sw), '画面遷移がnetwork-firstではありません');
 assert(/SKIP_WAITING/.test(sw), '更新適用メッセージがありません');
 assert(/startsWith\(CACHE_PREFIX\)/.test(sw), '旧キャッシュ削除が工房アプリだけに限定されていません');

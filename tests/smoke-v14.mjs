@@ -10,6 +10,7 @@ const sourceFiles = [
   'grade2-runtime-world.js',
   'course-core.js',
   'story-core.js',
+  'audio-core.js',
   'app.js'
 ];
 const sources = {};
@@ -433,7 +434,7 @@ for (const filename of sourceFiles) {
 }
 assert(/132\s*ステージ/.test(html), 'index.html にG1/G2全132ステージが反映されていません');
 assert(manifest.description.includes('132ステージ'), 'manifest にG1/G2全132ステージが反映されていません');
-assert(/hirameki-kobo-v6/.test(sw), 'ストーリー統合版でService Workerのキャッシュ世代が更新されていません');
+assert(/hirameki-kobo-v7/.test(sw), 'BGM・問題UI改善版でService Workerのキャッシュ世代が更新されていません');
 
 console.log(
   'v14 smoke test: G1/G2 132 stages / G2 ' + generatedQuestions +

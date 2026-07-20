@@ -111,7 +111,11 @@
       showHint: false
     }, data || {});
     if (!APP_KINDS.includes(question.kind)) throw new Error('Unsupported G2 question kind: ' + question.kind);
-    if (question.options && question.options.length) question.options = shuffle(question.options, rng);
+    if (question.options && question.options.length) {
+      question.options = question.optionPolicy === 'fixed'
+        ? question.options.slice()
+        : shuffle(question.options, rng);
+    }
     question.signature = questionSignature(question);
     return question;
   }

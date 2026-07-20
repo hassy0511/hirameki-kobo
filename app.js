@@ -5,6 +5,7 @@
   if (!C) throw new Error('HiramekiCore is required');
   const K = global.HiramekiCourses || null;
   const S = global.HiramekiStory || null;
+  const A = global.HiramekiAudio || null;
 
   const {
     STAGE_ROUNDS,
@@ -48,7 +49,7 @@
     result: null
   };
   let session = null;
-  let audioContext = null;
+  const audioEngine = A && typeof A.create === 'function' ? A.create() : null;
   let toastTimer = null;
   let rushTimerId = null;
   let deferredInstallPrompt = null;
@@ -236,29 +237,26 @@
     ui.courseFinaleStep = 0;
   }
 
+  function normalizedBgmVolume() {
+    const value = Number(state.settings && state.settings.bgmVolume);
+    return Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0.35;
+  }
+
+  function syncAudio() {
+    if (!audioEngine) return;
+    audioEngine.configure({
+      master: Boolean(state.settings && state.settings.sound),
+      bgm: Boolean(state.settings && state.settings.bgm),
+      bgmVolume: normalizedBgmVolume(),
+      visible: document.visibilityState !== 'hidden',
+      mode: session && session.mode === 'timeAttack' && session.startedAt ? 'rush' : 'normal'
+    });
+  }
+
   function playTone(kind) {
-    if (!state.settings.sound) return;
-    try {
-      const Audio = global.AudioContext || global.webkitAudioContext;
-      if (!Audio) return;
-      audioContext = audioContext || new Audio();
-      const now = audioContext.currentTime;
-      const notes = kind === 'good' ? [523, 659, 784] : kind === 'hint' ? [330, 294] : kind === 'finish' ? [523, 659, 784, 1047] : [440];
-      notes.forEach(function (frequency, index) {
-        const oscillator = audioContext.createOscillator();
-        const gain = audioContext.createGain();
-        oscillator.type = 'sine';
-        oscillator.frequency.value = frequency;
-        gain.gain.setValueAtTime(0.0001, now + index * .08);
-        gain.gain.exponentialRampToValueAtTime(.09, now + index * .08 + .02);
-        gain.gain.exponentialRampToValueAtTime(.0001, now + index * .08 + .17);
-        oscillator.connect(gain).connect(audioContext.destination);
-        oscillator.start(now + index * .08);
-        oscillator.stop(now + index * .08 + .2);
-      });
-    } catch (error) {
-      // Sound is optional.
-    }
+    if (!audioEngine) return;
+    syncAudio();
+    audioEngine.playTone(kind);
   }
 
   function showToast(message) {
@@ -590,8 +588,24 @@
     return '<div class="clock-board"><div class="clock-face"><span class="clock-number n12">12</span><span class="clock-number n3">3</span><span class="clock-number n6">6</span><span class="clock-number n9">9</span><span class="clock-hand hour" style="--rotation:' + hourRotation + 'deg"></span><span class="clock-hand minute" style="--rotation:' + minuteRotation + 'deg"></span><span class="clock-pin"></span></div></div>';
   }
 
+  function unitLengthHtml(question, line, interactive) {
+    const visual = question.visual || {};
+    const targetUnits = Math.max(1, Math.min(10, Number(visual.targetUnits) || 1));
+    const maxUnits = Math.max(targetUnits, Math.min(10, Number(visual.maxUnits) || 10));
+    const selected = new Set(question.selected || []);
+    const gridStyle = 'grid-template-columns:repeat(' + maxUnits + ',minmax(18px,44px))';
+    const blocks = repeat(maxUnits, function (index) {
+      const active = interactive ? selected.has(index) : index < targetUnits;
+      if (!interactive) return '<span class="unit-measure-block ' + (active ? 'selected' : 'ghost') + '"></span>';
+      return '<button class="unit-measure-block ' + (active ? 'selected' : '') + '" data-piece="' + index + '" aria-label="ここまでで' + (index + 1) + 'こ分" aria-pressed="' + active + '"></button>';
+    });
+    return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="unit-measure-board"><strong>この ぼうの ながさ</strong><div class="unit-target-grid" style="' + gridStyle + '"><span class="unit-target-bar" style="grid-column:1 / span ' + targetUnits + '"></span></div><strong>' + (interactive ? 'ブロックの 右はしを タップ' : 'ブロック1こ分ずつ かぞえる') + '</strong><div class="unit-measure-grid" style="' + gridStyle + '">' + blocks + '</div></div></div>';
+  }
+
   function visualHtml(question, line) {
     const visual = question.visual || {};
+    if (visual.type === 'unit-length-builder') return unitLengthHtml(question, line, true);
+    if (visual.type === 'unit-length-count') return unitLengthHtml(question, line, false);
     if (question.kind === 'tap' || question.kind === 'remove') {
       return '<div class="visual-board" style="' + lineStyle(line) + '">' + interactivePieces(question, line) + '</div>';
     }
@@ -609,7 +623,7 @@
       return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="object-grid">' + repeat(visual.count, function () { return '<span class="object-chip">' + esc(visual.icon || '◆') + '</span>'; }) + '</div></div>';
     }
     if (visual.type === 'compare-groups') {
-      return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="group-compare"><div class="group-box">' + miniParts(visual.left) + '</div><span class="compare-divider">くらべる</span><div class="group-box">' + miniParts(visual.right) + '</div></div></div>';
+      return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="group-compare"><div class="compare-side"><span class="axis-label">ひだり</span><div class="group-box">' + miniParts(visual.left) + '</div></div><span class="compare-divider">くらべる</span><div class="compare-side"><span class="axis-label">みぎ</span><div class="group-box">' + miniParts(visual.right) + '</div></div></div></div>';
     }
     if (visual.type === 'bond') {
       return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="ten-frame-wrap">' + tenFrame(visual.known) + '<span class="operation-symbol">?</span><strong>' + visual.target + 'こにする</strong></div></div>';
@@ -661,6 +675,10 @@
       const total = visual.total;
       return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="object-grid">' + repeat(total, function () { return '<span class="object-chip">◆</span>'; }) + '</div><p class="muted">' + (visual.mode === 'none' ? '何も取り出さない' : visual.mode === 'all' ? '全部取り出す' : '') + '</p></div>';
     }
+    if (visual.type === 'length-position-compare') {
+      const method = visual.method === 'indirect' ? '<div class="length-method-chip">〰 テープに うつして、はじまりを そろえたよ</div>' : '<div class="length-method-chip">↔ はじまりを そろえたよ</div>';
+      return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="length-position-board">' + method + '<div class="length-position-pair"><div class="length-position-item" data-length-side="left"><div class="length-upright"><span class="length-stick" style="--length:' + visual.left + ';--bar-color:' + line.accent + '"></span></div><strong>ひだり</strong></div><div class="length-position-item" data-length-side="right"><div class="length-upright"><span class="length-stick" style="--length:' + visual.right + ';--bar-color:#ffd45c"></span></div><strong>みぎ</strong></div></div><div class="length-baseline">▲ 二本の はじまり</div></div></div>';
+    }
     if (visual.type === 'length') {
       return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="length-board"><span class="length-bar" style="--length:' + visual.left + ';--bar-color:' + line.accent + '"></span><span class="length-bar ' + (visual.aligned ? '' : 'offset') + '" style="--length:' + visual.right + ';--bar-color:#ffd45c"></span></div></div>';
     }
@@ -670,11 +688,14 @@
     if (visual.type === 'tools') {
       return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="object-grid"><span class="object-chip">📏</span><span class="object-chip">〰</span><span class="object-chip">▥</span></div><p class="muted">' + esc(visual.scene) + '</p></div>';
     }
+    if (visual.type === 'measure-method') {
+      return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="measure-method-scene" data-method-scene="' + attr(visual.sceneId) + '"><span aria-hidden="true">' + esc(visual.icon) + '</span><div><strong>' + esc(visual.title) + '</strong><p>' + esc(visual.detail) + '</p></div></div></div>';
+    }
     if (visual.type === 'capacity') {
-      return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="tank-board"><div class="tank"><span class="tank-fill" style="--fill:' + visual.left + '"></span></div><div class="tank"><span class="tank-fill" style="--fill:' + visual.right + '"></span></div></div></div>';
+      return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="tank-board"><div class="compare-side"><span class="axis-label">ひだり</span><div class="tank"><span class="tank-fill" style="--fill:' + visual.left + '"></span></div></div><div class="compare-side"><span class="axis-label">みぎ</span><div class="tank"><span class="tank-fill" style="--fill:' + visual.right + '"></span></div></div></div></div>';
     }
     if (visual.type === 'area') {
-      return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="area-board"><div class="area-grid">' + repeat(12, function (index) { return '<span class="area-cell ' + (index < visual.left ? 'filled' : '') + '"></span>'; }) + '</div><div class="area-grid">' + repeat(12, function (index) { return '<span class="area-cell ' + (index < visual.right ? 'filled' : '') + '"></span>'; }) + '</div></div></div>';
+      return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="area-board"><div class="compare-side"><span class="axis-label">ひだり</span><div class="area-grid">' + repeat(12, function (index) { return '<span class="area-cell ' + (index < visual.left ? 'filled' : '') + '"></span>'; }) + '</div></div><div class="compare-side"><span class="axis-label">みぎ</span><div class="area-grid">' + repeat(12, function (index) { return '<span class="area-cell ' + (index < visual.right ? 'filled' : '') + '"></span>'; }) + '</div></div></div></div>';
     }
     if (visual.type === 'solid-scan' || visual.type === 'solid-action' || visual.type === 'stamp') {
       return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="solid-board"><span class="solid-token">' + esc(visual.icon || visual.solid) + '</span>' + (visual.face ? '<span class="operation-symbol">→</span><span class="solid-token">' + esc(visual.face) + '</span>' : '') + '</div></div>';
@@ -709,14 +730,32 @@
     return C.optionValue(option);
   }
 
+  function answerLayoutClass(question) {
+    const allowed = ['horizontal-axis', 'vertical-axis', 'depth-axis', 'relation'];
+    const layout = allowed.includes(question.optionLayout) ? question.optionLayout : 'neutral';
+    const count = Math.max(1, Math.min(4, (question.options || []).length));
+    return 'answers answers--' + layout + ' answers--count-' + count + (question.visual && question.visual.type === 'measure-method' ? ' method-options' : '');
+  }
+
+  function answerButtonContent(option, question) {
+    const label = String(optionLabel(option));
+    const icon = typeof option === 'object' && option !== null ? option.icon : '';
+    const arrow = question.optionLayout === 'horizontal-axis' && label === 'ひだり' ? '←' : question.optionLayout === 'horizontal-axis' && label === 'みぎ' ? '→' : '';
+    return (icon ? '<span class="answer-icon" aria-hidden="true">' + esc(icon) + '</span>' : '') + '<span>' + (arrow && label === 'ひだり' ? esc(arrow + ' ' + label) : arrow ? esc(label + ' ' + arrow) : esc(label)) + '</span>';
+  }
+
   function actionHtml(question, line) {
     if (question.feedback) return feedbackHtml(question);
     if (question.kind === 'choice' || question.kind === 'route' || question.kind === 'sort') {
-      return '<div class="answers">' + (question.options || []).map(function (option) {
-        return '<button class="answer-button" style="' + lineStyle(line) + '" data-answer="' + attr(optionValue(option)) + '">' + esc(optionLabel(option)) + '</button>';
+      return '<div class="' + answerLayoutClass(question) + '">' + (question.options || []).map(function (option) {
+        return '<button class="answer-button' + (question.visual && question.visual.type === 'measure-method' ? ' method-answer' : '') + '" style="' + lineStyle(line) + '" data-answer="' + attr(optionValue(option)) + '">' + answerButtonContent(option, question) + '</button>';
       }).join('') + '</div>';
     }
     if (question.kind === 'tap' || question.kind === 'remove' || question.kind === 'select') {
+      if (question.visual && question.visual.type === 'unit-length-builder') {
+        const units = (question.selected || []).length;
+        return '<div class="operation-panel unit-length-operation"><div class="operation-readout">いま：ブロック ' + units + 'こ分</div><div class="submit-row"><button class="soft-button" data-action="reset-operation">やりなおす</button><button class="primary-button" style="' + lineStyle(line) + '" data-action="submit-operation">この長さで けってい</button></div></div>';
+      }
       const current = question.kind === 'select' ? (question.selected || []).length + 'マス' : (question.selected || []).length + 'こ';
       return '<div class="operation-panel"><div class="operation-readout">' + current + ' えらんだ</div><div class="submit-row"><button class="soft-button" data-action="reset-operation">やりなおす</button><button class="primary-button" style="' + lineStyle(line) + '" data-action="submit-operation">けってい</button></div></div>';
     }
@@ -1203,7 +1242,18 @@
     if (ui.courseFinaleStep != null) return renderCourseFinale();
     if (!ui.modal) return '';
     if (ui.modal === 'settings') {
-      return '<div class="overlay"><section class="modal-card" role="dialog" aria-modal="true" aria-label="設定"><h2>せってい</h2><div class="setting-row"><span>おと</span><button class="toggle ' + (state.settings.sound ? 'on' : '') + '" data-action="toggle-sound">' + (state.settings.sound ? 'オン' : 'オフ') + '</button></div><div class="setting-row"><span>うごき</span><button class="toggle ' + (state.settings.motion ? 'on' : '') + '" data-action="toggle-motion">' + (state.settings.motion ? 'オン' : 'オフ') + '</button></div><div class="setting-row" style="display:block"><label for="renameInput">こうぼうの なまえ</label><input id="renameInput" class="name-input" maxlength="8" value="' + esc(state.workshopName) + '"></div><div class="button-row" style="margin-top:18px"><button class="soft-button" data-action="close-modal">とじる</button><button class="primary-button" data-action="save-settings">ほぞん</button></div>' + (!isStandalone() ? '<hr><button class="secondary-button" data-action="install-app">ホーム画面に追加</button>' : '') + '</section></div>';
+      const volumePercent = Math.round(normalizedBgmVolume() * 100);
+      return [
+        '<div class="overlay"><section class="modal-card" role="dialog" aria-modal="true" aria-label="設定"><h2>せってい</h2>',
+        '<div class="setting-row"><span>おと（ぜんぶ）</span><button class="toggle ', state.settings.sound ? 'on' : '', '" aria-label="おと（ぜんぶ） ', state.settings.sound ? 'オン' : 'オフ', '" aria-pressed="', state.settings.sound ? 'true' : 'false', '" data-action="toggle-sound">', state.settings.sound ? 'オン' : 'オフ', '</button></div>',
+        '<div class="setting-row"><span>BGM</span><button class="toggle ', state.settings.bgm ? 'on' : '', '" aria-label="BGM ', state.settings.bgm ? 'オン' : 'オフ', '" aria-pressed="', state.settings.bgm ? 'true' : 'false', '" data-action="toggle-bgm">', state.settings.bgm ? 'オン' : 'オフ', '</button></div>',
+        '<div class="setting-row setting-volume"><label for="bgmVolume">BGMの おおきさ <output id="bgmVolumeOutput">', volumePercent, '%</output></label><input id="bgmVolume" type="range" min="0" max="100" step="5" value="', volumePercent, '" data-bgm-volume aria-label="BGMの おおきさ"></div>',
+        '<div class="setting-row"><span>うごき</span><button class="toggle ', state.settings.motion ? 'on' : '', '" aria-label="うごき ', state.settings.motion ? 'オン' : 'オフ', '" aria-pressed="', state.settings.motion ? 'true' : 'false', '" data-action="toggle-motion">', state.settings.motion ? 'オン' : 'オフ', '</button></div>',
+        '<div class="setting-row" style="display:block"><label for="renameInput">こうぼうの なまえ</label><input id="renameInput" class="name-input" maxlength="8" value="', esc(state.workshopName), '"></div>',
+        '<div class="button-row" style="margin-top:18px"><button class="soft-button" data-action="close-modal">とじる</button><button class="primary-button" data-action="save-settings">ほぞん</button></div>',
+        !isStandalone() ? '<hr><button class="secondary-button" data-action="install-app">ホーム画面に追加</button>' : '',
+        '</section></div>'
+      ].join('');
     }
     if (ui.modal === 'quit') {
       return '<div class="overlay"><section class="modal-card" role="dialog" aria-modal="true"><h2>ここで ちゅうだんする？</h2><p>' + (session && session.mode === 'timeAttack' ? '今回のタイムは記録されません。' : 'いまのステージの記録は残りません。') + '</p><div class="button-row"><button class="soft-button" data-action="close-modal">つづける</button><button class="danger-button" data-action="quit-session">ちゅうだんする</button></div></section></div>';
@@ -1226,8 +1276,9 @@
     return '<div class="update-banner"><span>新しい工房が届きました</span><button class="primary-button compact-button" data-action="apply-update">更新する</button></div>';
   }
 
-  function render() {
+  function render(preferredFocusSelector) {
     document.body.classList.toggle('no-motion', !state.settings.motion);
+    syncAudio();
     const app = document.getElementById('app');
     if (!app) return;
     const screens = {
@@ -1243,7 +1294,8 @@
     };
     app.innerHTML = (screens[ui.screen] || renderHome)();
     requestAnimationFrame(function () {
-      const dialogControl = document.querySelector('.overlay button, .overlay input');
+      const preferredControl = preferredFocusSelector ? document.querySelector('.overlay ' + preferredFocusSelector) : null;
+      const dialogControl = preferredControl || document.querySelector('.overlay button, .overlay input');
       if (dialogControl) dialogControl.focus();
     });
   }
@@ -1316,6 +1368,14 @@
     const question = currentQuestion();
     if (!question) return;
     const value = Number(index);
+    if (question.visual && question.visual.type === 'unit-length-builder') {
+      question.selected = Array.from({ length: value + 1 }, function (_, itemIndex) { return itemIndex; });
+      question.input = normalizeQuestionInput(question);
+      playTone('tap');
+      render();
+      if (session && session.mode === 'timeAttack') updateRushTimer();
+      return;
+    }
     question.selected = question.selected || [];
     const position = question.selected.indexOf(value);
     if (position >= 0) question.selected.splice(position, 1);
@@ -1368,6 +1428,7 @@
   }
 
   document.addEventListener('click', function (event) {
+    if (audioEngine) audioEngine.unlock();
     const nav = event.target.closest('[data-nav]');
     if (nav) {
       navigate(nav.dataset.nav);
@@ -1533,10 +1594,13 @@
     else if (action === 'start-rush') startTimeAttack(actionNode.dataset.line);
     else if (action === 'begin-rush') beginTimeAttack();
     else if (action === 'cancel-rush') { session = null; ui.screen = 'home'; render(); }
-    else if (action === 'toggle-sound') { state.settings.sound = !state.settings.sound; saveState(); render(); }
-    else if (action === 'toggle-motion') { state.settings.motion = !state.settings.motion; saveState(); render(); }
+    else if (action === 'toggle-sound') { state.settings.sound = !state.settings.sound; saveState(); render('[data-action="toggle-sound"]'); }
+    else if (action === 'toggle-bgm') { state.settings.bgm = !state.settings.bgm; saveState(); render('[data-action="toggle-bgm"]'); }
+    else if (action === 'toggle-motion') { state.settings.motion = !state.settings.motion; saveState(); render('[data-action="toggle-motion"]'); }
     else if (action === 'save-settings') {
       const rename = document.getElementById('renameInput');
+      const bgmVolume = document.getElementById('bgmVolume');
+      if (bgmVolume) state.settings.bgmVolume = Math.max(0, Math.min(1, Number(bgmVolume.value) / 100));
       state.workshopName = (rename && rename.value.trim() || 'ひらめき').slice(0, 8);
       ui.modal = null;
       saveState();
@@ -1563,7 +1627,18 @@
     else if (action === 'apply-update' && waitingWorker) waitingWorker.postMessage({ type: 'SKIP_WAITING' });
   });
 
+  document.addEventListener('input', function (event) {
+    const volume = event.target.closest && event.target.closest('[data-bgm-volume]');
+    if (!volume) return;
+    state.settings.bgmVolume = Math.max(0, Math.min(1, Number(volume.value) / 100));
+    const output = document.getElementById('bgmVolumeOutput');
+    if (output) output.textContent = Math.round(state.settings.bgmVolume * 100) + '%';
+    saveState();
+    syncAudio();
+  });
+
   document.addEventListener('visibilitychange', function () {
+    if (audioEngine) audioEngine.setVisible(document.visibilityState !== 'hidden');
     if (!session || session.mode !== 'timeAttack' || !session.startedAt) return;
     if (document.visibilityState === 'hidden' && !session.timer.pausedAt) {
       session.timer.pausedAt = Date.now();
@@ -1572,6 +1647,14 @@
       session.timer.pausedAt = null;
       updateRushTimer();
     }
+  });
+
+  global.addEventListener('pagehide', function () {
+    if (audioEngine) audioEngine.setVisible(false);
+  });
+
+  global.addEventListener('pageshow', function () {
+    if (audioEngine) audioEngine.setVisible(true);
   });
 
   global.addEventListener('beforeinstallprompt', function (event) {
@@ -1654,7 +1737,12 @@
     getLines: function () { return LINES; },
     getState: function () { return state; },
     getSession: function () { return session; },
-    getUi: function () { return ui; }
+    getUi: function () { return ui; },
+    getAudioSnapshot: function () {
+      return audioEngine && typeof audioEngine.snapshot === 'function'
+        ? audioEngine.snapshot()
+        : null;
+    }
   };
 
   /* TEST_HOOK */

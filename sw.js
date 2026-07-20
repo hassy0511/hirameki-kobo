@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'hirameki-kobo-';
-const CACHE_NAME = 'hirameki-kobo-v6';
+const CACHE_NAME = 'hirameki-kobo-v7';
 const APP_FILES = [
   './',
   './index.html',
@@ -10,6 +10,7 @@ const APP_FILES = [
   './grade2-runtime-world.js',
   './course-core.js',
   './story-core.js',
+  './audio-core.js',
   './app.js',
   './manifest.json',
   './icon-192.png',

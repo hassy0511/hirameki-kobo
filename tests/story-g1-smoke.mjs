@@ -10,6 +10,7 @@ const sourceFiles = [
   'grade2-runtime-world.js',
   'course-core.js',
   'story-core.js',
+  'audio-core.js',
   'app.js'
 ];
 const sources = Object.fromEntries(sourceFiles.map(filename => [
@@ -57,8 +58,10 @@ const indexHtml = fs.readFileSync(new URL('index.html', rootUrl), 'utf8');
 const sw = fs.readFileSync(new URL('sw.js', rootUrl), 'utf8');
 assert(indexHtml.indexOf('course-core.js') < indexHtml.indexOf('story-core.js'), 'story-core.js はコース定義の後に読み込む必要があります');
 assert(indexHtml.indexOf('story-core.js') < indexHtml.indexOf('app.js'), 'story-core.js はapp.jsより先に読み込む必要があります');
+assert(indexHtml.indexOf('audio-core.js') < indexHtml.indexOf('app.js'), 'audio-core.js はapp.jsより先に読み込む必要があります');
 assert(sw.includes('./story-core.js'), 'Service Workerにstory-core.jsがありません');
-assert(sw.includes('hirameki-kobo-v6'), '物語統合版のキャッシュ世代が不正です');
+assert(sw.includes('./audio-core.js'), 'Service Workerにaudio-core.jsがありません');
+assert(sw.includes('hirameki-kobo-v7'), 'BGM・問題UI改善版のキャッシュ世代が不正です');
 
 function createAppHarness(options = {}) {
   const appElement = { innerHTML: '' };

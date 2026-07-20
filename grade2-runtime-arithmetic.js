@@ -217,7 +217,11 @@
     question.stageIndex = meta.stageIndex;
     question.canonicalSkillId = meta.stage.canonicalSkillId || FALLBACK_STAGES[meta.lineId][meta.stageIndex][1];
     question.checkpoint = meta.stageIndex === 4 || meta.stageIndex === 10;
-    if (question.options && question.options.length) question.options = shuffle(question.options, rng);
+    if (question.options && question.options.length) {
+      question.options = question.optionPolicy === 'fixed'
+        ? question.options.slice()
+        : shuffle(question.options, rng);
+    }
     question.signature = questionSignature(question);
     return question;
   }
@@ -288,8 +292,8 @@
     }, extra || {});
   }
 
-  function relationOptions(correct) {
-    return uniqueOptions(correct, ['＞', '＜', '＝'], 3);
+  function relationOptions() {
+    return ['＜', '＝', '＞'];
   }
 
   function digits3(rng, allowZero) {
@@ -433,7 +437,7 @@
     const correct = left > right ? '＞' : '＜';
     const role = round % STAGE_ROUNDS;
     const visual = { type: 'place-value-compare', left, right };
-    if (role === 0) return { kind: 'choice', prompt: left + ' □ ' + right + '。ゲートの向きは？', correct, options: relationOptions(correct), visual, hint: 'いちばん大きい位から比べよう。', explain: left + correct + right + 'だよ。' };
+    if (role === 0) return { kind: 'choice', prompt: left + ' □ ' + right + '。ゲートの向きは？', correct, options: relationOptions(), optionPolicy: 'fixed', optionLayout: 'relation', visual, hint: 'いちばん大きい位から比べよう。', explain: left + correct + right + 'だよ。' };
     if (role === 1) return { kind: 'sort', prompt: '大きい数を「大きい」トレイへ。', correct: String(Math.max(left, right)), options: [String(left), String(right)], visual: { type: 'sort', item: left + ' と ' + right, bins: [String(left), String(right)] }, hint: '上の位で違うところを探そう。', explain: Math.max(left, right) + 'のほうが大きいね。' };
     if (role === 2) {
       let third = fourDigit ? rand(1000, 9999, rng) : rand(100, 999, rng);
@@ -448,7 +452,7 @@
     }
     if (role === 4) return { kind: 'choice', prompt: '比較ゲートの説明で正しいものは？', correct: '大きい位から比べる', options: ['大きい位から比べる', '一の位だけ比べる', '数字の個数だけ見る'], visual, hint: '位の大きさには順番があるよ。', explain: '千・百・十・一のように大きい位から比べるよ。' };
     if (role === 5) return { kind: 'choice', prompt: '東倉庫に' + left + 'こ、西倉庫に' + right + 'こある。多い倉庫の個数は？', correct: Math.max(left, right), options: numberOptions(Math.max(left, right), { min: fourDigit ? 1000 : 100, max: fourDigit ? 9999 : 999, step: 10 }, rng), visual, story: true, hint: '倉庫の数を大きい位から比べよう。', explain: Math.max(left, right) + 'この倉庫が多いね。' };
-    if (role === 6) return { kind: 'choice', prompt: left + ' □ ' + right, correct, options: relationOptions(correct), visual, bareCalculation: true, operation: false, hint: '左から違う位を探そう。', explain: left + correct + right + '。' };
+    if (role === 6) return { kind: 'choice', prompt: left + ' □ ' + right, correct, options: relationOptions(), optionPolicy: 'fixed', optionLayout: 'relation', visual, bareCalculation: true, operation: false, hint: '左から違う位を探そう。', explain: left + correct + right + '。' };
     return { kind: 'route', prompt: '大きい数へ回路をつなごう。', correct: Math.max(left, right), options: uniqueOptions(Math.max(left, right), [Math.min(left, right)], 2), visual, hint: '位ごとに比べよう。', explain: '大きい数は' + Math.max(left, right) + '。' };
   }
 
@@ -519,7 +523,7 @@
     if (role === 4) {
       const other = parts.value + pick([-100, -10, 10, 100], rng);
       const correct = parts.value > other ? '＞' : '＜';
-      return { kind: 'choice', prompt: parts.value + ' □ ' + other, correct, options: relationOptions(correct), visual: { type: 'place-value-compare', left: parts.value, right: other }, hint: '違う位を上から探そう。', explain: parts.value + correct + other + '。' };
+      return { kind: 'choice', prompt: parts.value + ' □ ' + other, correct, options: relationOptions(), optionPolicy: 'fixed', optionLayout: 'relation', visual: { type: 'place-value-compare', left: parts.value, right: other }, hint: '違う位を上から探そう。', explain: parts.value + correct + other + '。' };
     }
     if (role === 5) return numericChoice(parts.value, 'タワーの千ケース' + parts.thousands + 'こ、百ケース' + parts.hundreds + 'こ、十束' + parts.tens + '本、ばら' + parts.ones + 'こを再点検する。合計は？', visual, rng, { min: 1000, max: 9999, step: 100, story: true, hint: '位ごとの数を合わせよう。', explain: '合計は' + parts.value + '。' });
     if (role === 6) return { kind: 'choice', prompt: (parts.thousands * 1000) + '＋' + (parts.hundreds * 100) + '＋' + (parts.tens * 10) + '＋' + parts.ones + '＝□', correct: parts.value, options: numberOptions(parts.value, { min: 1000, max: 9999, step: 100 }, rng), visual, bareCalculation: true, operation: false, hint: '位ごとの大きさを合わせよう。', explain: '答えは' + parts.value + '。' };

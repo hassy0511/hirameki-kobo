@@ -103,6 +103,15 @@
     return { runs: 0, bestMs: null, bestRawMs: null, bestMistakes: null, bestSeed: null, lastMs: null, lastMistakes: null, lastPlayed: null };
   }
 
+  function mergeSettings(saved) {
+    const source = saved && typeof saved === 'object' ? saved : {};
+    const result = Object.assign({ sound: true, bgm: true, bgmVolume: 0.35, motion: true }, source);
+    if (!Object.prototype.hasOwnProperty.call(source, 'bgm')) result.bgm = source.sound !== false;
+    const volume = Number(result.bgmVolume);
+    result.bgmVolume = Number.isFinite(volume) ? Math.max(0, Math.min(1, volume)) : 0.35;
+    return result;
+  }
+
   function createCourseState(courseId) {
     const course = COURSES[courseId];
     if (!course) throw new Error('Unknown course state: ' + courseId);
@@ -132,7 +141,7 @@
       courseChosen: false,
       workshopName: '',
       activeCourseId: 'g1',
-      settings: { sound: true, motion: true },
+      settings: mergeSettings(),
       courses: { g1: createCourseState('g1'), g2: createCourseState('g2') }
     };
   }
@@ -177,7 +186,7 @@
       base.courseChosen = Boolean(saved.courseChosen);
       base.workshopName = typeof saved.workshopName === 'string' ? saved.workshopName.slice(0, 8) : '';
       base.activeCourseId = COURSES[saved.activeCourseId] ? saved.activeCourseId : 'g1';
-      base.settings = Object.assign({}, base.settings, saved.settings || {});
+      base.settings = mergeSettings(saved.settings);
       COURSE_ORDER.forEach(function (courseId) { base.courses[courseId] = mergeCourseState(courseId, saved.courses[courseId]); });
       return base;
     }
@@ -185,7 +194,7 @@
     base.introSeen = Boolean(legacy.introSeen);
     base.courseChosen = false;
     base.workshopName = legacy.workshopName;
-    base.settings = Object.assign({}, base.settings, legacy.settings || {});
+    base.settings = mergeSettings(legacy.settings);
     base.courses.g1 = mergeCourseState('g1', legacy);
     base.courses.g1.introSeen = true;
     base.courses.g1.history = base.courses.g1.history.map(function (item) { return Object.assign({}, item, { gradeId: 'g1', courseId: 'g1' }); });
@@ -308,6 +317,7 @@
     COURSE_ORDER: COURSE_ORDER,
     createDefaultState: createDefaultState,
     createCourseState: createCourseState,
+    mergeSettings: mergeSettings,
     migrateState: migrateState,
     courseFor: courseFor,
     courseState: courseState,

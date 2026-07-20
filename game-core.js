@@ -149,6 +149,44 @@
     return typeof option === 'object' && option !== null ? option.value : option;
   }
 
+  function semanticOptionContract(options) {
+    const values = (options || []).map(optionValue).map(String);
+    const families = [
+      { layout: 'horizontal-axis', orders: [
+        ['ひだり', 'みぎ'], ['左', '右'],
+        ['ひだり', 'おなじ', 'みぎ'], ['左', 'おなじ', '右'],
+        ['左', '真ん中', '右'], ['ひだり', 'まんなか', 'みぎ'],
+        ['すくない', 'おおい'], ['少ない', '多い'],
+        ['すくない', 'おなじ', 'おおい'], ['少ない', 'おなじ', '多い']
+      ] },
+      { layout: 'vertical-axis', orders: [
+        ['上', '下'], ['うえ', 'した'],
+        ['上', '真ん中', '下'], ['うえ', 'まんなか', 'した'], ['上', 'おなじ', '下']
+      ] },
+      { layout: 'depth-axis', orders: [
+        ['前', '後ろ'], ['まえ', 'うしろ'], ['前', '真ん中', '後ろ'], ['まえ', 'まんなか', 'うしろ']
+      ] },
+      { layout: 'relation', orders: [['＜', '＝', '＞']] }
+    ];
+    for (let familyIndex = 0; familyIndex < families.length; familyIndex += 1) {
+      const family = families[familyIndex];
+      for (let orderIndex = 0; orderIndex < family.orders.length; orderIndex += 1) {
+        const order = family.orders[orderIndex];
+        if (order.length === values.length && order.every(function (value) { return values.includes(value); })) {
+          return { policy: 'fixed', layout: family.layout, order: order.slice() };
+        }
+      }
+    }
+    return null;
+  }
+
+  function applySemanticOrder(options, order) {
+    if (!order || !order.length) return options.slice();
+    return order.map(function (value) {
+      return options.find(function (option) { return String(optionValue(option)) === value; });
+    });
+  }
+
   function answerEquals(expected, actual) {
     if (Array.isArray(expected)) {
       const left = expected.map(String).sort().join('|');
@@ -188,9 +226,12 @@
       skill: question.canonicalSkillId,
       kind: question.kind,
       prompt: question.prompt,
+      instruction: question.instruction,
       correct: question.correct,
       options: optionSet,
-      values: question.math || visual.values || visual.counts || visual.target || null,
+      visual,
+      math: question.math || null,
+      template: question.templateId || null,
       story: question.story || false
     };
     return hashString(JSON.stringify(semantic));
@@ -209,6 +250,10 @@
       story: false,
       checkpoint: false,
       speedSafe: true,
+      templateId: '',
+      interactionFamily: '',
+      optionPolicy: 'shuffle',
+      optionLayout: 'neutral',
       input: '',
       selected: [],
       orderSelected: [],
@@ -216,7 +261,13 @@
       feedback: null,
       showHint: false
     }, data);
-    if (question.options && question.options.length) question.options = shuffle(question.options, rng);
+    const optionContract = semanticOptionContract(question.options);
+    if (optionContract) {
+      question.optionPolicy = optionContract.policy;
+      question.optionLayout = optionContract.layout;
+      question.options = applySemanticOrder(question.options, optionContract.order);
+    }
+    if (question.options && question.options.length && question.optionPolicy !== 'fixed') question.options = shuffle(question.options, rng);
     question.signature = questionSignature(question);
     return question;
   }
@@ -292,7 +343,7 @@
         correct,
         options: ['ひだり', 'おなじ', 'みぎ'],
         visual: { type: 'compare-groups', left, right },
-        hint: '上と下を 一つずつ ペアにしてみよう。',
+        hint: 'ひだりと みぎを 一つずつ ペアにしてみよう。',
         explain: left + 'こと' + right + 'こだから、' + correct + 'だよ。'
       }, rng);
     }
@@ -894,57 +945,116 @@
     return retagQuestion(q, { checkpoint: true, assessmentFor: SUBTRACTION_STAGES[10].canonicalSkillId });
   }
 
-  function lengthQuestion(canonicalSkillId, mode, rng) {
-    const left = rand(3, 10, rng);
-    let right = rand(3, 10, rng);
-    if (mode !== 'equal' && right === left) right = Math.min(10, right + 1);
-    if (mode === 'equal') right = left;
-    const correct = left === right ? 'おなじ' : left > right ? 'ひだり' : 'みぎ';
+  function sideComparisonQuestion(config, round, rng) {
+    const variant = ((Number(round) || 0) % 4 + 4) % 4;
+    const left = rand(config.min, config.max, rng);
+    let right = rand(config.min, config.max, rng);
+    const binarySame = variant === 3 && Math.floor((Number(round) || 0) / 4) % 2 === 0;
+    if (variant === 2 || binarySame) right = left;
+    else if (right === left) right = left < config.max ? left + 1 : left - 1;
+    const longer = left === right ? 'おなじ' : left > right ? 'ひだり' : 'みぎ';
+    const shorter = left === right ? 'おなじ' : left < right ? 'ひだり' : 'みぎ';
+    const binary = variant === 3;
+    const mode = binary ? 'same-check' : variant === 1 ? 'pick-shorter' : variant === 2 ? 'same-pair' : 'pick-longer';
+    const correct = binary ? (left === right ? 'おなじ' : 'ちがう') : variant === 1 ? shorter : longer;
+    const prompt = binary ? config.samePrompt : variant === 1 ? config.shorterPrompt : config.longerPrompt;
     return finalizeQuestion({
-      canonicalSkillId,
+      canonicalSkillId: config.canonicalSkillId,
       kind: 'choice',
-      prompt: 'どちらの 部品が 長い？',
+      prompt,
+      instruction: binary ? '二つを くらべて「おなじ・ちがう」を えらぼう' : 'ひだり・みぎを 見て こたえよう',
       correct,
-      options: ['ひだり', 'おなじ', 'みぎ'],
-      visual: { type: 'length', left, right, aligned: mode !== 'indirect' },
-      hint: mode === 'indirect' ? 'テープに うつした長さを くらべよう。' : '左の端を そろえて、右の端を見よう。',
-      explain: '端をそろえると、' + correct + 'だと分かるよ。'
+      options: binary ? ['おなじ', 'ちがう'] : ['ひだり', 'おなじ', 'みぎ'],
+      optionPolicy: binary ? 'fixed' : 'shuffle',
+      templateId: config.templatePrefix + '.' + mode,
+      interactionFamily: config.templatePrefix + ':choice',
+      visual: Object.assign({ type: config.visualType, left, right, comparisonMode: mode }, config.visualExtra || {}),
+      hint: config.hint,
+      explain: config.explain(left, right, correct)
     }, rng);
   }
 
+  function lengthQuestion(canonicalSkillId, mode, round, rng) {
+    const object = pick(mode === 'indirect' ? ['つくえの よこ', 'たなの よこ', '大きな いた'] : ['ぼう', 'リボン', 'コード'], rng);
+    return sideComparisonQuestion({
+      canonicalSkillId,
+      min: 3,
+      max: 10,
+      templatePrefix: 'measure.length.' + mode,
+      visualType: 'length-position-compare',
+      visualExtra: { method: mode, object },
+      longerPrompt: 'ひだりと みぎの ' + object + '。どちらが ながい？',
+      shorterPrompt: 'ひだりと みぎの ' + object + '。どちらが みじかい？',
+      samePrompt: 'ひだりと みぎの ' + object + 'は、おなじ ながさ？',
+      hint: mode === 'indirect' ? 'テープに うつした二本を、同じ はじまりから くらべよう。' : '二本の はじまりを そろえて、どこまで のびるか見よう。',
+      explain: function (left, right, correct) {
+        return (mode === 'indirect' ? 'テープにうつして はじまりをそろえると、' : 'はじまりをそろえると、') + correct + 'だと分かるよ。';
+      }
+    }, round, rng);
+  }
+
   function buildMeasureQuestion(stageIndex, round, rng) {
-    if (stageIndex === 0) return lengthQuestion(MEASURE_STAGES[0].canonicalSkillId, round % 4 === 0 ? 'equal' : 'direct', rng);
-    if (stageIndex === 1) return lengthQuestion(MEASURE_STAGES[1].canonicalSkillId, 'indirect', rng);
+    if (stageIndex === 0) return lengthQuestion(MEASURE_STAGES[0].canonicalSkillId, 'direct', round, rng);
+    if (stageIndex === 1) return lengthQuestion(MEASURE_STAGES[1].canonicalSkillId, 'indirect', round, rng);
     if (stageIndex === 2) {
       const units = rand(2, 10, rng);
+      const variant = ((Number(round) || 0) % 3 + 3) % 3;
+      if (variant === 0) {
+        return finalizeQuestion({
+          canonicalSkillId: MEASURE_STAGES[2].canonicalSkillId,
+          kind: 'tap',
+          prompt: '上の ぼうは、ブロック いくつ分の ながさ？',
+          instruction: '下のブロックを ひだりから見て、ぼうの右はしと合うところをタップ。できたら「けってい」',
+          correct: units,
+          min: 0,
+          max: 10,
+          templateId: 'measure.unit.build',
+          interactionFamily: 'measure.unit:tap-endpoint',
+          visual: { type: 'unit-length-builder', targetUnits: units, maxUnits: 10 },
+          hint: 'ブロック1こ分ずつ、ぼうの はしまで 数えよう。',
+          explain: 'ぼうと ぴったり同じなのは、ブロック' + units + 'こ分だね。'
+        }, rng);
+      }
       return numericQuestion({
         canonicalSkillId: MEASURE_STAGES[2].canonicalSkillId,
-        kind: 'tap',
-        prompt: '同じブロックを ならべると、いくつ分の 長さ？',
+        kind: variant === 1 ? 'choice' : 'slider',
+        prompt: variant === 1 ? 'ぼうの下に ならんだブロックは、いくつ分？' : 'ぼうと同じ長さになるよう、ブロック数カウンターを合わせよう。',
+        instruction: variant === 1 ? 'ブロックを ひだりから数えて、数をえらぼう' : '−と＋で ブロックの数を合わせて「けってい」',
         correct: units,
         min: 0,
         max: 10,
-        visual: { type: 'unit-length', count: units },
-        hint: '同じ大きさのブロックを 一つずつ数えよう。',
+        start: 0,
+        templateId: variant === 1 ? 'measure.unit.count' : 'measure.unit.counter',
+        interactionFamily: variant === 1 ? 'measure.unit:choice' : 'measure.unit:slider',
+        visual: { type: 'unit-length-count', targetUnits: units, maxUnits: 10 },
+        hint: '同じ大きさのブロックを、ひだりから 一つずつ数えよう。',
         explain: 'ブロック' + units + 'こ分の 長さだね。'
       }, rng);
     }
     if (stageIndex === 3) {
       const cases = [
-        { scene: 'となりに置ける 二本の棒', correct: '直接くらべる' },
-        { scene: '動かせない 二つの机', correct: 'テープにうつす' },
-        { scene: '長さを 数で伝える', correct: '同じ物のいくつ分' }
+        { id: 'direct', icon: '↔', title: 'うごかせる 二本のぼう', detail: 'どちらが ながいか しらべたい。', prompt: '二本のぼうは うごかせます。どうやって ながさを くらべる？' },
+        { id: 'transfer', icon: '〰', title: 'うごかせない 二つのつくえ', detail: 'はなれたまま、どちらが ながいか しらべたい。', prompt: '二つのつくえは うごかせません。どうやって ながさを くらべる？' },
+        { id: 'unit', icon: '▥', title: 'はなれた人へ つたえる', detail: '見えない人にも、ぼうの ながさを つたえたい。', prompt: 'はなれた人に ぼうの ながさを つたえるには、どうする？' }
       ];
       const item = pick(cases, rng);
+      const methods = [
+        { value: 'direct', icon: '↔', label: 'はしを そろえて ならべる' },
+        { value: 'transfer', icon: '〰', label: 'テープに うつして くらべる' },
+        { value: 'unit', icon: '▥', label: '同じブロックで なんこ分か はかる' }
+      ];
       return finalizeQuestion({
         canonicalSkillId: MEASURE_STAGES[3].canonicalSkillId,
-        kind: 'sort',
-        prompt: item.scene + '。どの方法が いい？',
-        correct: item.correct,
-        options: ['直接くらべる', 'テープにうつす', '同じ物のいくつ分'],
-        visual: { type: 'tools', scene: item.scene },
-        hint: '動かせるか、数字で伝えるかを 考えよう。',
-        explain: item.scene + 'なら「' + item.correct + '」が ぴったり。'
+        kind: 'choice',
+        prompt: item.prompt,
+        instruction: 'したの三つから、やりかたを 一つえらぼう',
+        correct: item.id,
+        options: methods,
+        templateId: 'measure.method.' + item.id,
+        interactionFamily: 'measure.method:choice',
+        visual: { type: 'measure-method', sceneId: item.id, icon: item.icon, title: item.title, detail: item.detail },
+        hint: 'うごかせる？ うつしとる？ 数でつたえる？を 考えよう。',
+        explain: methods.find(function (method) { return method.value === item.id; }).label + 'と ぴったりだね。'
       }, rng);
     }
     if (stageIndex === 4) {
@@ -952,36 +1062,32 @@
       return retagQuestion(q, { checkpoint: true, assessmentFor: MEASURE_STAGES[4].canonicalSkillId });
     }
     if (stageIndex === 5) {
-      const left = rand(2, 8, rng);
-      let right = rand(2, 8, rng);
-      if (round % 4 === 0) right = left;
-      const correct = left === right ? 'おなじ' : left > right ? 'ひだり' : 'みぎ';
-      return finalizeQuestion({
+      return sideComparisonQuestion({
         canonicalSkillId: MEASURE_STAGES[5].canonicalSkillId,
-        kind: 'choice',
-        prompt: '同じカップで 入れたよ。どちらのタンクの かさが多い？',
-        correct,
-        options: ['ひだり', 'おなじ', 'みぎ'],
-        visual: { type: 'capacity', left, right },
+        min: 2,
+        max: 8,
+        templatePrefix: 'measure.capacity',
+        visualType: 'capacity',
+        longerPrompt: '同じカップで 入れたよ。どちらのタンクの かさが おおい？',
+        shorterPrompt: '同じカップで 入れたよ。どちらのタンクの かさが すくない？',
+        samePrompt: '二つのタンクは、おなじ かさ？',
         hint: 'カップ何はい分かを くらべよう。',
-        explain: '左は' + left + 'はい、右は' + right + 'はいだから、' + correct + '。'
-      }, rng);
+        explain: function (left, right, correct) { return 'ひだりは' + left + 'はい、みぎは' + right + 'はいだから、' + correct + '。'; }
+      }, round, rng);
     }
     if (stageIndex === 6) {
-      const left = rand(3, 12, rng);
-      let right = rand(3, 12, rng);
-      if (round % 4 === 0) right = left;
-      const correct = left === right ? 'おなじ' : left > right ? 'ひだり' : 'みぎ';
-      return finalizeQuestion({
+      return sideComparisonQuestion({
         canonicalSkillId: MEASURE_STAGES[6].canonicalSkillId,
-        kind: 'choice',
-        prompt: '同じマスで しきつめたよ。どちらが 広い？',
-        correct,
-        options: ['ひだり', 'おなじ', 'みぎ'],
-        visual: { type: 'area', left, right },
+        min: 3,
+        max: 12,
+        templatePrefix: 'measure.area',
+        visualType: 'area',
+        longerPrompt: '同じマスで しきつめたよ。どちらが ひろい？',
+        shorterPrompt: '同じマスで しきつめたよ。どちらが せまい？',
+        samePrompt: '二つの ひろさは、おなじ？',
         hint: '同じ大きさのマスを 数えよう。',
-        explain: '左は' + left + 'マス、右は' + right + 'マス。' + correct + 'だよ。'
-      }, rng);
+        explain: function (left, right, correct) { return 'ひだりは' + left + 'マス、みぎは' + right + 'マス。' + correct + 'だよ。'; }
+      }, round, rng);
     }
     if (stageIndex >= 7 && stageIndex <= 9) {
       const hour = rand(1, 12, rng);
@@ -1398,10 +1504,11 @@
     for (let round = 0; round < count; round += 1) {
       let question;
       let guard = 0;
+      const previousTemplate = questions.length ? questions[questions.length - 1].templateId : '';
       do {
         question = buildQuestion(lineId, stageIndex, round + guard, { rng });
         guard += 1;
-      } while ((used.has(question.signature) || recent.has(question.signature)) && guard < 60);
+      } while ((used.has(question.signature) || recent.has(question.signature) || (question.templateId && question.templateId === previousTemplate)) && guard < 80);
       if (used.has(question.signature)) {
         question.signature = question.signature + '-' + round + '-' + hashString(seed + ':' + guard);
       }
@@ -1420,20 +1527,33 @@
     solve: [0, 1, 2, 3, 3, 5, 5, 6, 7, 8, 9, 10]
   };
 
+  function spreadAdjacent(items, rng) {
+    const remaining = shuffle(items, rng);
+    const result = [];
+    while (remaining.length) {
+      const previous = result.length ? result[result.length - 1] : null;
+      let candidateIndex = remaining.findIndex(function (value) { return value !== previous; });
+      if (candidateIndex < 0) candidateIndex = 0;
+      result.push(remaining.splice(candidateIndex, 1)[0]);
+    }
+    return result;
+  }
+
   function makeTimeAttackQuestions(lineId, options) {
     const config = options || {};
     const seed = config.seed == null ? Date.now() : config.seed;
     const rng = seededRng(seed);
-    const pool = shuffle(RUSH_STAGE_POOLS[lineId] || RUSH_STAGE_POOLS.number, rng);
+    const pool = spreadAdjacent(RUSH_STAGE_POOLS[lineId] || RUSH_STAGE_POOLS.number, rng);
     const used = new Set(config.exclude || []);
     const questions = [];
     pool.forEach(function (stageIndex, round) {
       let question;
       let guard = 0;
+      const previous = questions.length ? questions[questions.length - 1] : null;
       do {
         question = buildQuestion(lineId, stageIndex, round + guard + 17, { rng });
         guard += 1;
-      } while (used.has(question.signature) && guard < 50);
+      } while ((used.has(question.signature) || (previous && question.templateId && question.templateId === previous.templateId)) && guard < 80);
       used.add(question.signature);
       question.rush = true;
       question.checkpoint = false;
@@ -1469,7 +1589,7 @@
       progress: {},
       parts: {},
       moods: {},
-      settings: { sound: true, motion: true },
+      settings: { sound: true, bgm: true, bgmVolume: 0.35, motion: true },
       stats: emptyStats(),
       lineStats,
       islandStats: lineStats,
@@ -1506,7 +1626,11 @@
     base.progress = saved.progress && typeof saved.progress === 'object' ? saved.progress : {};
     base.parts = saved.parts && typeof saved.parts === 'object' ? saved.parts : {};
     base.moods = saved.moods && typeof saved.moods === 'object' ? saved.moods : {};
-    base.settings = Object.assign({}, base.settings, saved.settings || {});
+    const savedSettings = saved.settings && typeof saved.settings === 'object' ? saved.settings : {};
+    base.settings = Object.assign({}, base.settings, savedSettings);
+    if (!Object.prototype.hasOwnProperty.call(savedSettings, 'bgm')) base.settings.bgm = savedSettings.sound !== false;
+    const bgmVolume = Number(base.settings.bgmVolume);
+    base.settings.bgmVolume = Number.isFinite(bgmVolume) ? Math.max(0, Math.min(1, bgmVolume)) : 0.35;
     base.stats = mergeStats(base.stats, saved.stats);
     const sourceLineStats = saved.lineStats || saved.islandStats || {};
     if (Number(saved.version || 1) === 1 && saved.stats) sourceLineStats.addition = mergeStats(emptyStats(), saved.stats);
@@ -1592,12 +1716,14 @@
     pick,
     shuffle,
     optionValue,
+    semanticOptionContract,
     answerEquals,
     numberChoices,
     questionSignature,
     buildQuestion,
     makeStageQuestions,
     makeTimeAttackQuestions,
+    spreadAdjacent,
     createDefaultState,
     defaultState: createDefaultState,
     migrateState,
