@@ -268,20 +268,33 @@
     toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 2200);
   }
 
+  function lineNumber(lineId) {
+    const index = LINE_ORDER.indexOf(lineId);
+    return index >= 0 ? index + 1 : 1;
+  }
+
+  function lineBadgeHtml(line, className) {
+    return '<span class="' + (className || 'line-badge') + '"><small>LINE</small><b>' + lineNumber(line.id) + '</b></span>';
+  }
+
+  function storyArtHtml(label) {
+    return '<div class="story-art" role="img" aria-label="' + attr(label || 'トトとモクモが作業台で案内している') + '"></div>';
+  }
+
   function header(active) {
     return [
       '<header class="topbar">',
       '<button class="brand-button" data-nav="home" aria-label="工房コントロール室へ">',
-      '<span class="brand-mark">H</span>',
+      '<span class="brand-mark" aria-hidden="true"><span class="brand-core"></span></span>',
       '<span class="brand-copy"><strong>ひらめき工房</strong><small>HIRAMEKI WORKSHOP</small></span>',
       '</button>',
       '<nav class="main-nav" aria-label="メインメニュー">',
-      K ? navButton('courses', '◎ ' + course.short, active) : '',
-      navButton('home', '⌂ 工房', active),
-      navButton('map', '▤ 設計図', active),
-      navButton('atelier', '◆ パーツ', active),
-      navButton('parent', '● おうち', active),
-      '<button class="icon-button" data-action="open-settings" aria-label="設定">⚙</button>',
+      K ? navButton('courses', course.short, active) : '',
+      navButton('home', '工房', active),
+      navButton('map', '設計図', active),
+      navButton('atelier', 'ずかん', active),
+      navButton('parent', '記録', active),
+      '<button class="icon-button" data-action="open-settings" aria-label="設定">設定</button>',
       '</nav>',
       '</header>'
     ].join('');
@@ -373,14 +386,14 @@
       const lineStory = activeLineStory(lineId);
       return [
         '<article class="line-card" style="', lineStyle(line), '">',
-        '<div class="line-card-top"><span class="line-symbol">', esc(line.symbol), '</span><div><div class="eyebrow">LEARNING LINE</div><h3>', esc(line.name), '</h3></div></div>',
+        '<div class="line-card-top">', lineBadgeHtml(line), '<div><div class="eyebrow">LEARNING LINE</div><h3>', esc(line.name), '</h3></div></div>',
         lineStory ? '<div class="line-story-label"><span>' + esc(storyText(lineStory.system)) + '</span><strong>' + esc(storyText(lineStory.power)) + '</strong></div>' : '',
         '<p>', esc(storyText(lineStory && lineStory.mission || line.description)), '</p>',
         '<div class="progress-track"><div class="progress-fill" style="--progress:', Math.round(count / line.stages.length * 100), '%"></div></div>',
         '<div class="line-progress-copy"><span>', count, ' / ', line.stages.length, ' しゅうり</span><span>', totalMarks(lineId), ' / ', line.stages.length * 3, ' ひらめき印</span></div>',
         '<div class="line-card-actions">',
         '<button class="primary-button compact-button" style="', lineStyle(line), '" data-action="open-line" data-line="', lineId, '">', complete ? '設計図を見る' : 'つぎ：' + esc(next.name), '</button>',
-        complete ? '<button class="secondary-button compact-button" data-action="start-rush" data-line="' + lineId + '">⚡ タイム</button>' : '<button class="soft-button compact-button" data-action="open-line" data-line="' + lineId + '">一覧</button>',
+        complete ? '<button class="secondary-button compact-button" data-action="start-rush" data-line="' + lineId + '">タイムアタック</button>' : '<button class="soft-button compact-button" data-action="open-line" data-line="' + lineId + '">一覧</button>',
         '</div>',
         complete ? '<div class="rush-unlock">タイムアタック解放済み　ベスト ' + C.formatTimeMs(rush.bestMs) + '</div>' : '',
         '</article>'
@@ -397,7 +410,7 @@
       '<div class="hero-machine"><div class="machine-title"><span>ルミナ復旧パネル</span><b>', totalCleared, ' / ', totalStages, '</b></div><div class="machine-lamps">', lamps, '</div><div class="lumina-cores">', LINE_ORDER.map(function (lineId) {
         const line = lineFor(lineId);
         const story = activeLineStory(lineId);
-        return '<div class="lumina-core ' + (lineComplete(lineId) ? 'on' : clearedCount(lineId) ? 'working' : '') + '" style="' + lineStyle(line) + '"><span>' + esc(line.symbol) + '</span><small>' + esc(storyText(story ? story.power : line.short)) + '</small></div>';
+        return '<div class="lumina-core ' + (lineComplete(lineId) ? 'on' : clearedCount(lineId) ? 'working' : '') + '" style="' + lineStyle(line) + '"><span>' + lineNumber(lineId) + '</span><small>' + esc(storyText(story ? story.power : line.short)) + '</small></div>';
       }).join(''), '</div><div class="machine-conveyor"></div>',
       '<p class="muted">11個のパーツで一つのコアが完成。六つのコアをルミナへつなぎます。</p></div>',
       '</section>',
@@ -410,7 +423,7 @@
   function lineTabs() {
     return '<div class="line-tabs" aria-label="学習ライン">' + LINE_ORDER.map(function (lineId) {
       const line = lineFor(lineId);
-      return '<button class="line-tab ' + (ui.lineId === lineId ? 'active' : '') + '" style="' + lineStyle(line) + '" data-line-tab="' + lineId + '"><span>' + esc(line.symbol) + '</span>' + esc(line.short) + ' <small>' + clearedCount(lineId) + '/' + line.stages.length + '</small></button>';
+      return '<button class="line-tab ' + (ui.lineId === lineId ? 'active' : '') + '" style="' + lineStyle(line) + '" data-line-tab="' + lineId + '"><span>LINE ' + lineNumber(lineId) + '</span>' + esc(line.short) + ' <small>' + clearedCount(lineId) + '/' + line.stages.length + '</small></button>';
     }).join('') + '</div>';
   }
 
@@ -436,11 +449,11 @@
       return '<section class="zone-panel" style="' + lineStyle(line) + '"><div class="zone-head"><span class="zone-letter">' + zone.n + '</span><div><h2>' + esc(zone.name) + '</h2><small>' + esc(zone.note) + '</small></div></div><div class="stage-grid">' + cards + '</div></section>';
     }).join('');
     const rushAction = complete
-      ? '<button class="secondary-button heading-action" data-action="start-rush" data-line="' + line.id + '">⚡ タイムアタック</button>'
+      ? '<button class="secondary-button heading-action" data-action="start-rush" data-line="' + line.id + '">タイムアタック</button>'
       : '<button class="soft-button heading-action" disabled>' + line.stages.length + 'ステージ完了でタイムアタック</button>';
     return shell([
       '<main class="page">', lineTabs(),
-      '<section class="page-heading-card" style="', lineStyle(line), '"><span class="heading-symbol">', esc(line.symbol), '</span><div><div class="eyebrow">REPAIR BLUEPRINT</div><h1>', esc(line.name), '</h1>',
+      '<section class="page-heading-card" style="', lineStyle(line), '">', lineBadgeHtml(line, 'heading-symbol'), '<div><div class="eyebrow">REPAIR BLUEPRINT</div><h1>', esc(line.name), '</h1>',
       lineStory ? '<div class="line-story-label"><span>' + esc(storyText(lineStory.system)) + '</span><strong>' + esc(storyText(lineStory.power)) + '</strong></div>' : '',
       '<p>', esc(storyText(lineStory && lineStory.mission || line.description)), '　', count, '/', line.stages.length, ' 修理済み</p>', lineStory ? '<button class="story-link" data-action="replay-line-story" data-line="' + attr(line.id) + '">トトとモクモの作戦をみる</button>' : '', '</div>', rushAction, '</section>',
       '<div class="zones">', zones, '</div>',
@@ -501,8 +514,8 @@
     }).join('');
     return [
       '<aside class="mission-machine" style="', lineStyle(line), '"><div class="machine-face">',
-      '<div class="machine-screen"><div><small>', esc(storyText(lineStory ? lineStory.system : 'REPAIR PART')), '</small><strong>', esc(stage.symbol), ' ', esc(stage.part), '</strong></div></div>',
-      '<div class="energy-row">', energy, '</div><div class="machine-gears"><span>⚙</span><span>⚙</span></div>',
+      '<div class="machine-screen"><div><small>', esc(storyText(lineStory ? lineStory.system : 'REPAIR PART')), '</small><strong><span class="machine-stage-number">', stage.n, '</span>', esc(stage.part), '</strong></div></div>',
+      '<div class="energy-row">', energy, '</div><div class="machine-gears" aria-hidden="true"><span class="css-gear"></span><span class="css-gear small"></span></div>',
       '<p class="muted">正解すると、', esc(storyText(lineStory ? lineStory.power : '装置')), 'の回路へエネルギーが届きます。</p>',
       '</div></aside>'
     ].join('');
@@ -549,6 +562,54 @@
     }).join('') + '</div>';
   }
 
+  const VISUAL_TOKEN_META = {
+    '🔩': { className: 'bolt', label: 'ねじ' },
+    '⚙': { className: 'gear', label: 'はぐるま' },
+    '⚙️': { className: 'gear', label: 'はぐるま' },
+    '💡': { className: 'lamp', label: 'ランプ' },
+    '🔋': { className: 'battery', label: 'でんち' },
+    '🔧': { className: 'wrench', label: 'レンチ' },
+    '🟦': { className: 'block-blue', label: 'あおい ブロック' },
+    '🟡': { className: 'block-yellow', label: 'きいろい ブロック' },
+    '🟢': { className: 'block-green', label: 'みどりの ブロック' },
+    '■': { className: 'cube', label: 'しかくい ブロック' },
+    '◆': { className: 'cube', label: 'こうぼうの 部品' },
+    '┃': { className: 'stick', label: 'ぼう' },
+    '▤': { className: 'record', label: 'きろくカード' },
+    '✓': { className: 'check', label: 'チェック印' },
+    '▰': { className: 'fraction-piece', label: '同じ大きさの 一つ分' },
+    '▣': { className: 'box', label: 'はこ' },
+    '▦': { className: 'dice', label: 'さいころ' },
+    '▥': { className: 'cylinder', label: 'つつ' },
+    '●': { className: 'ball', label: 'ボール' }
+  };
+
+  const METHOD_META = {
+    direct: { label: 'はしを そろえて ならべる', scene: '二本のぼうを動かし、はしをそろえて比べる' },
+    transfer: { label: 'テープに うつして くらべる', scene: '動かせない物の長さをテープへうつして比べる' },
+    unit: { label: '同じブロックで なんこ分か はかる', scene: '同じ大きさのブロックを並べて長さを数で表す' }
+  };
+
+  function tokenMeta(value) {
+    const key = String(value == null ? '' : value);
+    return VISUAL_TOKEN_META[key] || VISUAL_TOKEN_META[key.replace(/\uFE0F/g, '')] || { className: 'text', label: key || 'こうぼうの 部品' };
+  }
+
+  function visualTokenHtml(value, extraClass, visibleLabel) {
+    const meta = tokenMeta(value);
+    const label = visibleLabel || meta.label;
+    const object = meta.className === 'text'
+      ? '<span class="visual-token-text">' + esc(value || label) + '</span>'
+      : '<span class="learning-object learning-object--' + meta.className + '" aria-hidden="true"></span>';
+    return '<span class="visual-token ' + (extraClass || '') + '" role="img" aria-label="' + attr(label) + '">' + object + (visibleLabel ? '<small>' + esc(label) + '</small>' : '<span class="sr-only">' + esc(label) + '</span>') + '</span>';
+  }
+
+  function methodSceneHtml(sceneId, compact) {
+    const id = METHOD_META[sceneId] ? sceneId : 'direct';
+    const meta = METHOD_META[id];
+    return '<span class="method-scene-image method-scene-image--' + id + (compact ? ' compact' : '') + '" role="img" aria-label="' + attr(meta.scene) + '"></span>';
+  }
+
   function interactivePieces(question, line) {
     const visual = question.visual || {};
     let total = visual.total || visual.target || visual.count || visual.b || question.max || 10;
@@ -560,8 +621,9 @@
     total = Math.max(Number(question.correct) || 0, Math.min(20, Number(total) || 10));
     const selected = new Set(question.selected || []);
     return '<div class="selectable-grid" style="' + lineStyle(line) + '">' + repeat(total, function (index) {
-      const icon = visual.icons && visual.icons.length ? visual.icons[index % visual.icons.length] : visual.type === 'sticks' ? '┃' : visual.type === 'graph-build' ? '▤' : '◆';
-      return '<button class="tap-piece ' + (selected.has(index) ? 'selected' : '') + '" data-piece="' + index + '" aria-pressed="' + selected.has(index) + '">' + esc(icon) + '</button>';
+      const icon = visual.icons && visual.icons.length ? visual.icons[index % visual.icons.length] : visual.type === 'sticks' ? '┃' : visual.type === 'graph-build' ? '✓' : '■';
+      const label = tokenMeta(icon).label + ' ' + (index + 1);
+      return '<button class="tap-piece ' + (selected.has(index) ? 'selected' : '') + '" data-piece="' + index + '" aria-label="' + attr(label) + '" aria-pressed="' + selected.has(index) + '">' + visualTokenHtml(icon) + '</button>';
     }) + '</div>';
   }
 
@@ -620,7 +682,7 @@
       return '<div class="visual-board" style="' + lineStyle(line) + '">' + clockHtml(question.input) + '</div>';
     }
     if (visual.type === 'objects') {
-      return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="object-grid">' + repeat(visual.count, function () { return '<span class="object-chip">' + esc(visual.icon || '◆') + '</span>'; }) + '</div></div>';
+      return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="object-grid">' + repeat(visual.count, function () { return '<span class="object-chip">' + visualTokenHtml(visual.icon || '■') + '</span>'; }) + '</div></div>';
     }
     if (visual.type === 'compare-groups') {
       return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="group-compare"><div class="compare-side"><span class="axis-label">ひだり</span><div class="group-box">' + miniParts(visual.left) + '</div></div><span class="compare-divider">くらべる</span><div class="compare-side"><span class="axis-label">みぎ</span><div class="group-box">' + miniParts(visual.right) + '</div></div></div></div>';
@@ -639,7 +701,7 @@
       return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="number-rail"><span class="rail-stop">' + visual.start + '</span><span class="rail-link"></span><span class="operation-symbol">−' + visual.steps + '</span><span class="rail-link"></span><span class="rail-stop">?</span></div></div>';
     }
     if (visual.type === 'row') {
-      return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="object-grid">' + visual.items.map(function (item) { return '<span class="object-chip">' + esc(item) + '</span>'; }).join('') + '</div><p class="muted">' + (visual.direction === 'right' ? '← みぎから数える' : 'ひだりから数える →') + '</p></div>';
+      return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="object-grid">' + visual.items.map(function (item) { return '<span class="object-chip">' + visualTokenHtml(item) + '</span>'; }).join('') + '</div><p class="direction-guide">' + (visual.direction === 'right' ? '<b>みぎから</b> 一つずつ数える' : '<b>ひだりから</b> 一つずつ数える') + '</p></div>';
     }
     if (visual.type === 'ten-bundle' || visual.type === 'ten-bundle-remove') {
       const number = visual.type === 'ten-bundle' ? visual.tens * 10 + visual.ones : visual.a;
@@ -665,7 +727,7 @@
       return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="number-rail"><span class="rail-stop">' + visual.values[0] + '</span><span class="rail-link"></span><span class="operation-symbol">' + visual.ops[0] + visual.values[1] + '</span><span class="rail-link"></span><span class="operation-symbol">' + visual.ops[1] + visual.values[2] + '</span><span class="rail-link"></span><span class="rail-stop">?</span></div></div>';
     }
     if (visual.type === 'circuit') {
-      return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="machine-screen"><strong>⌁　⌁　⌁</strong><span>' + esc(visual.equation || '正しい回路をえらぶ') + '</span></div><div class="machine-conveyor"></div></div>';
+      return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="circuit-board"><span class="circuit-node"></span><span class="circuit-wire"></span><span class="circuit-node"></span><div><small>けいさんモニター</small><strong>' + esc(visual.equation || '正しい回路をえらぶ') + '</strong></div></div></div>';
     }
     if (visual.type === 'make-ten' || visual.type === 'break-ten') {
       const a = visual.a;
@@ -673,10 +735,10 @@
     }
     if (visual.type === 'remove' || visual.type === 'switch') {
       const total = visual.total;
-      return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="object-grid">' + repeat(total, function () { return '<span class="object-chip">◆</span>'; }) + '</div><p class="muted">' + (visual.mode === 'none' ? '何も取り出さない' : visual.mode === 'all' ? '全部取り出す' : '') + '</p></div>';
+      return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="object-grid">' + repeat(total, function () { return '<span class="object-chip">' + visualTokenHtml('■') + '</span>'; }) + '</div><p class="direction-guide">' + (visual.mode === 'none' ? '何も取り出さない' : visual.mode === 'all' ? '全部取り出す' : '取り出す部品を考えよう') + '</p></div>';
     }
     if (visual.type === 'length-position-compare') {
-      const method = visual.method === 'indirect' ? '<div class="length-method-chip">〰 テープに うつして、はじまりを そろえたよ</div>' : '<div class="length-method-chip">↔ はじまりを そろえたよ</div>';
+      const method = visual.method === 'indirect' ? '<div class="length-method-chip"><small>くらべる じゅんび</small><strong>テープに うつして、はじまりを そろえたよ</strong></div>' : '<div class="length-method-chip"><small>くらべる じゅんび</small><strong>二本の はじまりを そろえたよ</strong></div>';
       return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="length-position-board">' + method + '<div class="length-position-pair"><div class="length-position-item" data-length-side="left"><div class="length-upright"><span class="length-stick" style="--length:' + visual.left + ';--bar-color:' + line.accent + '"></span></div><strong>ひだり</strong></div><div class="length-position-item" data-length-side="right"><div class="length-upright"><span class="length-stick" style="--length:' + visual.right + ';--bar-color:#ffd45c"></span></div><strong>みぎ</strong></div></div><div class="length-baseline">▲ 二本の はじまり</div></div></div>';
     }
     if (visual.type === 'length') {
@@ -686,10 +748,10 @@
       return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="unit-strip">' + repeat(visual.count, function () { return '<span class="unit-block"></span>'; }) + '</div></div>';
     }
     if (visual.type === 'tools') {
-      return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="object-grid"><span class="object-chip">📏</span><span class="object-chip">〰</span><span class="object-chip">▥</span></div><p class="muted">' + esc(visual.scene) + '</p></div>';
+      return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="work-order-card"><small>モクモの しらべたいこと</small><strong>' + esc(visual.scene) + '</strong><span>この場面に合う道具や方法を考えよう</span></div></div>';
     }
     if (visual.type === 'measure-method') {
-      return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="measure-method-scene" data-method-scene="' + attr(visual.sceneId) + '"><span aria-hidden="true">' + esc(visual.icon) + '</span><div><strong>' + esc(visual.title) + '</strong><p>' + esc(visual.detail) + '</p></div></div></div>';
+      return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="measure-method-scene" data-method-scene="' + attr(visual.sceneId) + '">' + methodSceneHtml(visual.sceneId, false) + '<div><small>いまの場面</small><strong>' + esc(visual.title) + '</strong><p>' + esc(visual.detail) + '</p></div></div></div>';
     }
     if (visual.type === 'capacity') {
       return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="tank-board"><div class="compare-side"><span class="axis-label">ひだり</span><div class="tank"><span class="tank-fill" style="--fill:' + visual.left + '"></span></div></div><div class="compare-side"><span class="axis-label">みぎ</span><div class="tank"><span class="tank-fill" style="--fill:' + visual.right + '"></span></div></div></div></div>';
@@ -698,13 +760,17 @@
       return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="area-board"><div class="compare-side"><span class="axis-label">ひだり</span><div class="area-grid">' + repeat(12, function (index) { return '<span class="area-cell ' + (index < visual.left ? 'filled' : '') + '"></span>'; }) + '</div></div><div class="compare-side"><span class="axis-label">みぎ</span><div class="area-grid">' + repeat(12, function (index) { return '<span class="area-cell ' + (index < visual.right ? 'filled' : '') + '"></span>'; }) + '</div></div></div></div>';
     }
     if (visual.type === 'solid-scan' || visual.type === 'solid-action' || visual.type === 'stamp') {
-      return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="solid-board"><span class="solid-token">' + esc(visual.icon || visual.solid) + '</span>' + (visual.face ? '<span class="operation-symbol">→</span><span class="solid-token">' + esc(visual.face) + '</span>' : '') + '</div></div>';
+      const solidValue = visual.icon || visual.solid;
+      const solidLabel = visual.object || tokenMeta(solidValue).label;
+      return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="solid-board"><div class="solid-focus"><small>しらべる かたち</small>' + visualTokenHtml(solidValue, 'solid-token-visual', solidLabel) + '</div>' + (visual.face ? '<span class="operation-symbol">→</span><div class="face-card"><small>うつした面</small><strong>' + esc(visual.face) + '</strong></div>' : '') + '</div></div>';
     }
     if (visual.type === 'sort') {
-      return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="sort-board"><span class="sort-item">' + esc(visual.item) + '</span><div class="sort-bins">' + visual.bins.map(function (bin) { return '<span class="sort-bin">' + esc(bin) + '</span>'; }).join('') + '</div></div></div>';
+      const itemKnown = tokenMeta(visual.item).className !== 'text';
+      const itemHtml = itemKnown ? visualTokenHtml(visual.item, 'sort-visual-item', tokenMeta(visual.item).label) : '<strong class="sort-text-item">' + esc(visual.item) + '</strong>';
+      return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="sort-board"><div class="sort-focus"><small>わけるもの</small>' + itemHtml + '</div><div class="sort-guide">どのトレイに 入るかな？</div><div class="sort-bins">' + visual.bins.map(function (bin) { return '<span class="sort-bin"><small>トレイ</small><strong>' + esc(bin) + '</strong></span>'; }).join('') + '</div></div></div>';
     }
     if (visual.type === 'transform') {
-      return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="solid-board">' + repeat(visual.pieces, function (index) { return '<span class="object-chip">' + (index % 2 ? '◩' : '◪') + '</span>'; }) + '<span class="operation-symbol">↻</span></div></div>';
+      return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="shape-workbench"><div class="tangram-pieces">' + repeat(visual.pieces, function (index) { return '<span class="tangram-piece piece-' + (index % 4) + '"></span>'; }) + '</div><div class="turn-card"><small>うごかし方</small><strong>まわす・うらがえす・つなぐ</strong></div></div></div>';
     }
     if (visual.type === 'aligned-data' || visual.type === 'graph') {
       return '<div class="visual-board" style="' + lineStyle(line) + '">' + graphHtml(visual.labels, visual.counts) + '</div>';
@@ -740,8 +806,12 @@
   function answerButtonContent(option, question) {
     const label = String(optionLabel(option));
     const icon = typeof option === 'object' && option !== null ? option.icon : '';
+    if (question.visual && question.visual.type === 'measure-method' && typeof option === 'object' && option !== null) {
+      return methodSceneHtml(String(option.value), true) + '<span>' + esc(label) + '</span>';
+    }
     const arrow = question.optionLayout === 'horizontal-axis' && label === 'ひだり' ? '←' : question.optionLayout === 'horizontal-axis' && label === 'みぎ' ? '→' : '';
-    return (icon ? '<span class="answer-icon" aria-hidden="true">' + esc(icon) + '</span>' : '') + '<span>' + (arrow && label === 'ひだり' ? esc(arrow + ' ' + label) : arrow ? esc(label + ' ' + arrow) : esc(label)) + '</span>';
+    const iconHtml = icon ? (tokenMeta(icon).className === 'text' ? '' : visualTokenHtml(icon, 'answer-visual-token')) : '';
+    return iconHtml + '<span>' + (arrow && label === 'ひだり' ? esc(arrow + ' ' + label) : arrow ? esc(label + ' ' + arrow) : esc(label)) + '</span>';
   }
 
   function actionHtml(question, line) {
@@ -784,8 +854,21 @@
   }
 
   function renderQuestionCard(question, line, rush) {
+    const interactionLabels = {
+      choice: '一つ えらぶ',
+      route: '道を えらぶ',
+      sort: 'トレイを えらぶ',
+      tap: '部品を タップ',
+      remove: '部品を 取り出す',
+      select: 'マスを タップ',
+      order: '順番に ならべる',
+      slider: '数を あわせる',
+      clock: '針を うごかす',
+      input: '数字を 入れる'
+    };
+    const interactionLabel = interactionLabels[question.kind] || interactionLabels.input;
     const tags = [
-      '<span class="question-tag action">ACTION</span>',
+      '<span class="question-tag action">' + interactionLabel + '</span>',
       question.story ? '<span class="question-tag story">おはなし</span>' : '',
       question.checkpoint ? '<span class="question-tag check">かくにん</span>' : '',
       rush ? '<span class="question-tag check">TIME ATTACK</span>' : ''
@@ -795,7 +878,7 @@
       '<section class="', rush ? 'rush-question' : 'question-card', '" style="', lineStyle(line), '">',
       '<div class="question-tags">', tags, '</div>',
       '<h1 class="question-title">', esc(question.prompt), '</h1>',
-      '<p class="question-instruction">', esc(question.instruction), '</p>',
+      '<div class="question-instruction"><small>やること</small><strong>', esc(question.instruction), '</strong></div>',
       visualHtml(question, line),
       actionHtml(question, line),
       hint,
@@ -970,16 +1053,16 @@
       ? '<button class="primary-button" style="' + lineStyle(line) + '" data-stage="' + next + '">つぎのステージ →</button>'
       : '<button class="primary-button" style="' + lineStyle(line) + '" data-nav="map">設計図へ もどる</button>';
     return shell([
-      '<main class="result-card" style="', lineStyle(line), '"><div class="result-burst">', result.cleared ? esc(stage.symbol) : '↻', '</div>',
+      '<main class="result-card" style="', lineStyle(line), '"><div class="result-burst"><small>', result.cleared ? 'STAGE' : 'RETRY', '</small><b>', result.cleared ? stage.n : '↻', '</b></div>',
       '<div class="eyebrow">REPAIR REPORT</div><h1>', result.cleared ? 'しゅうり かんりょう！' : 'もういちど ためそう', '</h1>',
       '<p>', result.cleared ? esc(stage.part) + 'を取り付けました。考えたことが装置の動きになったね。' : '装置はまだ点滅中。5問正解すると修理できます。トトのヒントでもう一度見てみよう。', '</p>',
       result.firstClear && stageStory ? '<section class="world-change-card"><div class="eyebrow">WORKSHOP UPDATE</div><h2>' + esc(stage.name) + 'が動いた！</h2><p>' + esc(storyText(stageStory.effect)) + '</p></section>' : result.cleared ? '<div class="adjustment-note">調整完了。前よりなめらかに動いた！</div>' : '',
       result.firstClear && zoneIndex >= 0 && lineStory ? '<div class="zone-story-update"><strong>さぎょうくかく クリア</strong><span>' + esc(storyText(lineStory.zoneEffects[zoneIndex])) + '</span></div>' : '',
       '<div class="score-grid"><div class="score-box"><strong>', result.score, ' / 8</strong><small>さいしょの正解</small></div><div class="score-box"><strong>', marksText(result.stars), '</strong><small>ひらめき印</small></div><div class="score-box"><strong>', result.elapsed, '秒</strong><small>しゅうり時間</small></div></div>',
-      result.firstLineComplete ? (lineStory ? '<section class="line-complete-story"><div class="core-assembly"><span>' + esc(line.symbol) + '</span><span>＋</span><b>CORE</b></div><div><div class="eyebrow">LINE RESTORED・11 / 11</div><h2>' + esc(storyText(lineStory.completeTitle)) + '</h2><p>' + esc(storyText(lineStory.completeText)) + '</p><small>⚡ 修理後の高速点検「タイムアタック」がひらきました。</small></div></section>' : '<div class="rush-unlock">⚡ ' + esc(line.name) + 'の タイムアタックが ひらきました！</div>') : '',
+      result.firstLineComplete ? (lineStory ? '<section class="line-complete-story"><div class="core-assembly"><span class="line-core-badge"><small>LINE</small><b>' + lineNumber(line.id) + '</b></span><span class="core-connector"></span><b class="lumina-word">CORE</b></div><div><div class="eyebrow">LINE RESTORED・11 / 11</div><h2>' + esc(storyText(lineStory.completeTitle)) + '</h2><p>' + esc(storyText(lineStory.completeText)) + '</p><small>修理後の高速点検「タイムアタック」がひらきました。</small></div></section>' : '<div class="rush-unlock">' + esc(line.name) + 'の タイムアタックが ひらきました！</div>') : '',
       result.firstCourseComplete && activeCourseStory() && activeCourseStory().finale ? '<section class="course-complete-teaser"><strong>六つのコアがそろった！</strong><span>ルミナを さいごまで うごかそう。</span><button class="secondary-button" data-action="show-course-finale">くかくの かんせいを みる →</button></section>' : '',
       '<div class="button-row" style="justify-content:center;margin-top:22px"><button class="soft-button" data-action="retry-stage" data-stage="', result.stageIndex, '">もういちど</button>', nextButton,
-      result.lineCompleted ? '<button class="secondary-button" data-action="start-rush" data-line="' + line.id + '">⚡ タイムアタック</button>' : '', '</div>',
+      result.lineCompleted ? '<button class="secondary-button" data-action="start-rush" data-line="' + line.id + '">タイムアタック</button>' : '', '</div>',
       '<div class="button-row" style="justify-content:center;margin-top:16px"><span class="muted">どんな気分？</span><button class="soft-button compact-button" data-mood="fun" data-stage-id="', stage.id, '">たのしい</button><button class="soft-button compact-button" data-mood="okay" data-stage-id="', stage.id, '">できた</button><button class="soft-button compact-button" data-mood="hard" data-stage-id="', stage.id, '">むずかしい</button></div>',
       '</main>'
     ].join(''), '');
@@ -1112,7 +1195,7 @@
     const line = lineFor(session.lineId);
     const lineStory = activeLineStory(line.id);
     if (!session.startedAt) {
-      return '<main class="rush-shell" style="' + lineStyle(line) + '"><section class="rush-ready"><div class="rush-ready-inner"><div class="result-burst">⚡</div><div class="eyebrow">RESTORED LINE CHECK・HIRAMEKI TIME ATTACK</div><h1>' + esc(line.name) + ' 高速点検</h1><p style="color:#dfe8ff">' + esc(storyText(lineStory ? lineStory.rushMission : '修理した装置を12ミッションで点検しよう。')) + ' ミスは3秒加算。自分の記録へ何度でも挑戦できます。</p><div class="score-grid"><div class="score-box"><strong>12問</strong><small>ランダム点検</small></div><div class="score-box"><strong>＋3秒</strong><small>ミス1回</small></div><div class="score-box"><strong>' + C.formatTimeMs(state.timeAttack[line.id].bestMs) + '</strong><small>自己ベスト</small></div></div><div class="button-row" style="justify-content:center"><button class="soft-button" data-action="cancel-rush">もどる</button><button class="secondary-button" data-action="begin-rush">点検スタート！</button></div></div></section></main>';
+      return '<main class="rush-shell" style="' + lineStyle(line) + '"><section class="rush-ready"><div class="rush-ready-inner"><div class="result-burst"><small>TIME</small><b>TA</b></div><div class="eyebrow">RESTORED LINE CHECK・HIRAMEKI TIME ATTACK</div><h1>' + esc(line.name) + ' 高速点検</h1><p style="color:#dfe8ff">' + esc(storyText(lineStory ? lineStory.rushMission : '修理した装置を12ミッションで点検しよう。')) + ' ミスは3秒加算。自分の記録へ何度でも挑戦できます。</p><div class="score-grid"><div class="score-box"><strong>12問</strong><small>ランダム点検</small></div><div class="score-box"><strong>＋3秒</strong><small>ミス1回</small></div><div class="score-box"><strong>' + C.formatTimeMs(state.timeAttack[line.id].bestMs) + '</strong><small>自己ベスト</small></div></div><div class="button-row" style="justify-content:center"><button class="soft-button" data-action="cancel-rush">もどる</button><button class="secondary-button" data-action="begin-rush">点検スタート！</button></div></div></section></main>';
     }
     const question = currentQuestion();
     return [
@@ -1129,7 +1212,7 @@
     const line = lineFor(result.lineId);
     const lineStory = activeLineStory(line.id);
     return shell([
-      '<main class="result-card" style="', lineStyle(line), '"><div class="result-burst">⚡</div><div class="eyebrow">TIME ATTACK COMPLETE</div>',
+      '<main class="result-card" style="', lineStyle(line), '"><div class="result-burst"><small>TIME</small><b>TA</b></div><div class="eyebrow">TIME ATTACK COMPLETE</div>',
       '<h1>', result.isBest ? 'じこベスト！' : '12ミッション かんりょう！', '</h1><p>', esc(line.name), 'の高速点検が完了。', esc(storyText(lineStory ? lineStory.system : '装置')), 'は安定して動いています。</p>',
       '<div class="score-grid"><div class="score-box"><strong>', C.formatTimeMs(result.rawMs), '</strong><small>操作タイム</small></div><div class="score-box"><strong>＋', Math.round(result.mistakes * 3), '秒</strong><small>ミス ', result.mistakes, '回</small></div><div class="score-box"><strong>', C.formatTimeMs(result.officialMs), '</strong><small>公式タイム</small></div></div>',
       '<div class="rush-unlock">自己ベスト　', C.formatTimeMs(result.bestMs), '</div>',
@@ -1143,9 +1226,9 @@
       const line = lineFor(lineId);
       const count = clearedCount(lineId);
       const lineStory = activeLineStory(lineId);
-        return '<article class="collection-card" style="' + lineStyle(line) + '"><div class="line-card-top"><span class="line-symbol">' + esc(line.symbol) + '</span><div><h3>' + esc(line.name) + '</h3><small>' + count + ' / ' + line.stages.length + ' パーツ</small></div></div>' + (lineStory ? '<div class="collection-core ' + (count === line.stages.length ? 'on' : '') + '"><span>' + (count === line.stages.length ? '◆' : count + '/11') + '</span><div><small>' + esc(storyText(lineStory.system)) + '</small><strong>' + (count === line.stages.length ? esc(storyText(lineStory.completeTitle)) : 'パーツをつないでいるところ') + '</strong></div></div>' : '') + '<div class="parts-grid">' + line.stages.map(function (stage) {
+        return '<article class="collection-card" style="' + lineStyle(line) + '"><div class="line-card-top">' + lineBadgeHtml(line) + '<div><h3>' + esc(line.name) + '</h3><small>' + count + ' / ' + line.stages.length + ' パーツ</small></div></div>' + (lineStory ? '<div class="collection-core ' + (count === line.stages.length ? 'on' : '') + '"><span><small>CORE</small><b>' + (count === line.stages.length ? '完成' : count + '/11') + '</b></span><div><small>' + esc(storyText(lineStory.system)) + '</small><strong>' + (count === line.stages.length ? esc(storyText(lineStory.completeTitle)) : 'パーツをつないでいるところ') + '</strong></div></div>' : '') + '<div class="parts-grid">' + line.stages.map(function (stage) {
         const on = Boolean(state.parts[stage.id]);
-        return '<div class="part-chip ' + (on ? 'on' : '') + '"><b>' + (on ? esc(stage.symbol) : '?') + '</b>' + (on ? esc(stage.part) : 'まだ ひみつ') + '</div>';
+        return '<div class="part-chip ' + (on ? 'on' : '') + '"><b>' + (on ? stage.n : '?') + '</b>' + (on ? esc(stage.part) : 'まだ ひみつ') + '</div>';
       }).join('') + '</div></article>';
     }).join('');
     return shell('<main class="page"><div class="section-heading"><div><div class="eyebrow">WORKSHOP ARCHIVE・' + esc(course.label) + '</div><h1>しゅうり パーツ図鑑</h1></div><p>' + LINE_ORDER.reduce(function (sum, id) { return sum + clearedCount(id); }, 0) + ' / ' + totalStages + ' パーツ</p></div><section class="collection-grid">' + cards + '</section></main>', 'atelier');
@@ -1179,12 +1262,12 @@
     ];
     if (ui.openingStep < scenes.length) {
       const scene = scenes[ui.openingStep];
-      return '<div class="overlay"><section class="opening-card" role="dialog" aria-modal="true"><div class="mascot">' + esc(scene.icon) + '</div><div><div class="eyebrow">' + esc(scene.speaker) + '</div><h2>' + esc(storyTextFor('g1', scene.title)) + '</h2><p>' + esc(storyTextFor('g1', scene.text)) + '</p><button class="primary-button" data-action="opening-next">つぎへ →</button></div></section></div>';
+      return '<div class="overlay"><section class="opening-card" role="dialog" aria-modal="true">' + storyArtHtml('トトとモクモが工房の作業台から案内している') + '<div><div class="eyebrow">' + esc(scene.speaker) + '</div><h2>' + esc(storyTextFor('g1', scene.title)) + '</h2><p>' + esc(storyTextFor('g1', scene.text)) + '</p><button class="primary-button" data-action="opening-next">つぎへ →</button></div></section></div>';
     }
     if (returningForStoryRefresh) {
-      return '<div class="overlay"><section class="opening-card" role="dialog" aria-modal="true"><div class="mascot">🏭</div><div><div class="eyebrow">WORKSHOP RECORD SAFE</div><h2>' + esc(state.workshopName || 'ひらめき') + 'こうぼうへ おかえり！</h2><p>こうぼうの名前も、これまでのきろくも、そのままです。</p><button class="primary-button" data-action="finish-opening">このまま つづける →</button></div></section></div>';
+      return '<div class="overlay"><section class="opening-card" role="dialog" aria-modal="true">' + storyArtHtml('トトとモクモが工房へ戻ったおやかたを迎えている') + '<div><div class="eyebrow">WORKSHOP RECORD SAFE</div><h2>' + esc(state.workshopName || 'ひらめき') + 'こうぼうへ おかえり！</h2><p>こうぼうの名前も、これまでのきろくも、そのままです。</p><button class="primary-button" data-action="finish-opening">このまま つづける →</button></div></section></div>';
     }
-    return '<div class="overlay"><section class="opening-card" role="dialog" aria-modal="true"><div class="mascot">🏭</div><div><div class="eyebrow">NEW WORKSHOP MASTER</div><h2>おやかたの こうぼうに なまえをつけよう。</h2><p>この名前が、こうぼうのかんばんになります。</p><label for="workshopNameInput">8もじまで</label><input id="workshopNameInput" class="name-input" maxlength="8" placeholder="ひらめき" value="' + esc(state.workshopName) + '"><button class="primary-button" data-action="finish-opening">このこうぼうで しゅうりをはじめる</button></div></section></div>';
+    return '<div class="overlay"><section class="opening-card" role="dialog" aria-modal="true">' + storyArtHtml('トトとモクモがおやかたの新しい工房を案内している') + '<div><div class="eyebrow">NEW WORKSHOP MASTER</div><h2>おやかたの こうぼうに なまえをつけよう。</h2><p>この名前が、こうぼうのかんばんになります。</p><label for="workshopNameInput">8もじまで</label><input id="workshopNameInput" class="name-input" maxlength="8" placeholder="ひらめき" value="' + esc(state.workshopName) + '"><button class="primary-button" data-action="finish-opening">このこうぼうで しゅうりをはじめる</button></div></section></div>';
   }
 
   function renderCourseIntro() {
@@ -1196,7 +1279,7 @@
     ];
     const scene = scenes[Math.min(ui.courseIntroStep, scenes.length - 1)];
     const last = ui.courseIntroStep >= scenes.length - 1;
-    return '<div class="overlay"><section class="opening-card" role="dialog" aria-modal="true"><div class="mascot">' + esc(scene.icon) + '</div><div><div class="eyebrow">' + esc(scene.speaker) + '・' + esc(course.label) + '</div><h2>' + esc(storyText(scene.title)) + '</h2><p>' + esc(storyText(scene.text)) + '</p><button class="primary-button" data-action="' + (last ? 'finish-course-intro' : 'course-intro-next') + '">' + (last ? 'くかくへ はいる' : 'つぎへ') + ' →</button></div></section></div>';
+    return '<div class="overlay"><section class="opening-card" role="dialog" aria-modal="true">' + storyArtHtml('トトとモクモが' + course.label + 'の区画を案内している') + '<div><div class="eyebrow">' + esc(scene.speaker) + '・' + esc(course.label) + '</div><h2>' + esc(storyText(scene.title)) + '</h2><p>' + esc(storyText(scene.text)) + '</p><button class="primary-button" data-action="' + (last ? 'finish-course-intro' : 'course-intro-next') + '">' + (last ? 'くかくへ はいる' : 'つぎへ') + ' →</button></div></section></div>';
   }
 
   function renderLineIntro() {
@@ -1206,7 +1289,7 @@
     if (!story || !story.intro.length) return '';
     const scene = story.intro[Math.min(ui.lineIntroStep, story.intro.length - 1)];
     const last = ui.lineIntroStep >= story.intro.length - 1;
-    return '<div class="overlay"><section class="opening-card line-opening" style="' + lineStyle(line) + '" role="dialog" aria-modal="true"><div class="mascot">' + esc(scene.icon) + '</div><div><div class="eyebrow">' + esc(scene.speaker) + '・' + esc(storyText(story.system)) + '</div><h2>' + esc(storyText(scene.title)) + '</h2><p>' + esc(storyText(scene.text)) + '</p><div class="line-mission-chip"><small>このラインで もどす力</small><strong>' + esc(storyText(story.power)) + '</strong></div><button class="primary-button" style="' + lineStyle(line) + '" data-action="' + (last ? 'finish-line-intro' : 'line-intro-next') + '">' + (last ? 'せっけいずを ひらく' : 'つぎへ') + ' →</button></div></section></div>';
+    return '<div class="overlay"><section class="opening-card line-opening" style="' + lineStyle(line) + '" role="dialog" aria-modal="true">' + storyArtHtml('トトとモクモが' + storyText(story.system) + 'の作戦を説明している') + '<div><div class="eyebrow">' + esc(scene.speaker) + '・' + esc(storyText(story.system)) + '</div><h2>' + esc(storyText(scene.title)) + '</h2><p>' + esc(storyText(scene.text)) + '</p><div class="line-mission-chip"><small>このラインで もどす力</small><strong>' + esc(storyText(story.power)) + '</strong></div><button class="primary-button" style="' + lineStyle(line) + '" data-action="' + (last ? 'finish-line-intro' : 'line-intro-next') + '">' + (last ? 'せっけいずを ひらく' : 'つぎへ') + ' →</button></div></section></div>';
   }
 
   function renderStageIntro() {
@@ -1216,7 +1299,7 @@
     const lineStory = activeLineStory(line.id);
     const stageStory = S ? S.stageStory(activeCourseId, line.id, session.stageIndex, stage) : null;
     const actionCopy = /[。！？]$/.test(stage.action) ? stage.action : stage.action + '。';
-    return '<div class="overlay"><section class="opening-card mission-opening" style="' + lineStyle(line) + '" role="dialog" aria-modal="true"><div class="mascot">' + esc(stage.symbol) + '</div><div><div class="eyebrow">REPAIR MISSION ' + stage.n + '・' + esc(storyText(lineStory ? lineStory.system : 'トト')) + '</div><h2>' + esc(stage.name) + 'を なおそう！</h2>' + (stageStory ? '<div class="stage-diagnosis"><strong>モクモの しらべたこと</strong><span>' + esc(storyText(stageStory.briefing)) + '</span></div>' : '') + '<p><strong>おやかたの さぎょう：</strong>' + esc(storyText(actionCopy)) + '</p><p class="muted">' + esc(storyText(lineStory ? 'このパーツで「' + lineStory.power + '」の回路を一つつなぎます。' : 'この装置を直して、工房へ明かりを戻そう。')) + '</p><button class="primary-button" style="' + lineStyle(line) + '" data-action="begin-stage">しゅうりを はじめる →</button></div></section></div>';
+    return '<div class="overlay"><section class="opening-card mission-opening" style="' + lineStyle(line) + '" role="dialog" aria-modal="true">' + storyArtHtml('トトが作業を示し、モクモが診断結果を見せている') + '<div><div class="eyebrow">REPAIR MISSION ' + stage.n + '・' + esc(storyText(lineStory ? lineStory.system : 'トト')) + '</div><h2>' + esc(stage.name) + 'を なおそう！</h2>' + (stageStory ? '<div class="stage-diagnosis"><strong>モクモの しらべたこと</strong><span>' + esc(storyText(stageStory.briefing)) + '</span></div>' : '') + '<p><strong>おやかたの さぎょう：</strong>' + esc(storyText(actionCopy)) + '</p><p class="muted">' + esc(storyText(lineStory ? 'このパーツで「' + lineStory.power + '」の回路を一つつなぎます。' : 'この装置を直して、工房へ明かりを戻そう。')) + '</p><button class="primary-button" style="' + lineStyle(line) + '" data-action="begin-stage">しゅうりを はじめる →</button></div></section></div>';
   }
 
   function renderCourseFinale() {
@@ -1225,7 +1308,7 @@
     if (!story || !story.finale || !story.finale.length) return '';
     const scene = story.finale[Math.min(ui.courseFinaleStep, story.finale.length - 1)];
     const last = ui.courseFinaleStep >= story.finale.length - 1;
-    return '<div class="overlay"><section class="opening-card course-finale" role="dialog" aria-modal="true"><div class="mascot">' + esc(scene.icon) + '</div><div><div class="eyebrow">COURSE RESTORED・' + esc(scene.speaker) + '</div><h2>' + esc(storyText(scene.title)) + '</h2><p>' + esc(storyText(scene.text)) + '</p>' + (last ? '<div class="finale-emblem"><span>◆</span><div><small>RESTORE EMBLEM</small><strong>' + esc(storyText(story.finaleTitle)) + '</strong><p>' + esc(storyText(story.finaleText)) + '</p></div></div>' : '') + '<button class="primary-button" data-action="' + (last ? 'finish-course-finale' : 'course-finale-next') + '">' + (last ? 'こうぼうへ もどる' : 'ルミナを うごかす') + ' →</button></div></section></div>';
+    return '<div class="overlay"><section class="opening-card course-finale" role="dialog" aria-modal="true">' + storyArtHtml('光を取り戻した工房でトトとモクモが完成を祝っている') + '<div><div class="eyebrow">COURSE RESTORED・' + esc(scene.speaker) + '</div><h2>' + esc(storyText(scene.title)) + '</h2><p>' + esc(storyText(scene.text)) + '</p>' + (last ? '<div class="finale-emblem"><span class="lumina-gem" aria-hidden="true"></span><div><small>RESTORE EMBLEM</small><strong>' + esc(storyText(story.finaleTitle)) + '</strong><p>' + esc(storyText(story.finaleText)) + '</p></div></div>' : '') + '<button class="primary-button" data-action="' + (last ? 'finish-course-finale' : 'course-finale-next') + '">' + (last ? 'こうぼうへ もどる' : 'ルミナを うごかす') + ' →</button></div></section></div>';
   }
 
   function renderOverlay() {

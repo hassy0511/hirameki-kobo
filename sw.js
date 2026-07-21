@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'hirameki-kobo-';
-const CACHE_NAME = 'hirameki-kobo-v7';
+const CACHE_NAME = 'hirameki-kobo-v8';
 const APP_FILES = [
   './',
   './index.html',
@@ -12,6 +12,10 @@ const APP_FILES = [
   './story-core.js',
   './audio-core.js',
   './app.js',
+  './assets/workshop-hero-v1.jpg',
+  './assets/story-guides-v1.jpg',
+  './assets/measure-methods-v1.jpg',
+  './assets/workshop-objects-v1.jpg',
   './manifest.json',
   './icon-192.png',
   './icon-512.png'
