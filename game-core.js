@@ -12,87 +12,87 @@
   }
 
   const NUMBER_STAGES = [
-    stage('num_classify', 1, 'なかま分けトレイ', 'ものを なかまに分ける', 'g1.number.classify', '部品を見て、合うトレイを選ぶ', '仕分けレンズ', '◌'),
-    stage('num_pair', 2, 'ぴったりペア台', '同じ・多い・少ない', 'g1.number.one_to_one', '二つの列を一つずつペアにする', 'ペアアーム', '↔'),
-    stage('num_to5', 3, '5までカウンター', '1〜5の数', 'g1.number.to5', '光る部品を必要な数だけ点灯する', '5こメーター', '5'),
-    stage('num_to10', 4, '10までカウンター', '6〜10の数', 'g1.number.to10', '10個のマスと数字をつなぐ', '10こメーター', '10'),
-    stage('num_check', 5, 'かず基礎チェッカー', '1〜10の確認', 'g1.number.to10.review', '四つの操作を切り替えて検査する', '基礎チェック盤', '✓'),
-    stage('num_zero_bonds', 6, 'ゼロと数分け台', '0と数の合成・分解', 'g1.number.zero_bonds', '空の箱と二つの数枠を組み立てる', '数分けジョイント', '◇'),
-    stage('num_order', 7, '数ならびレール', '数の順序と大小', 'g1.number.order_compare', '数字車両を順番にレールへ置く', 'ならびレール', '⇢'),
-    stage('num_ordinal', 8, 'なんばんめ表示盤', '順序数と位置', 'g1.number.ordinal_position', '指示された位置の部品を点灯する', '位置センサー', '◎'),
-    stage('num_to20', 9, '20までカウンター', '10といくつ・まとまり', 'g1.number.to20', '10ケースとばら部品を数える', '20こカウンター', '20'),
-    stage('num_to100', 10, '100の位取り盤', '十の位・一の位', 'g1.number.to100', '十の束と一の部品を配置する', '位取りボード', '100'),
-    stage('num_core', 11, 'かずメインコア', '数の総合確認', 'g1.number.review', '数の見方を切り替えてコアを動かす', 'かずコア', '★')
+    stage('num_classify', 1, '1から5まで', '1〜5の数', 'g1.number.to5.intro', 'おなじ まるを かぞえて、すうじを えらぶ', 'かずの しるし', '1'),
+    stage('num_pair', 2, 'どちらが おおい？', '同じ・多い・少ない', 'g1.number.one_to_one', 'ふたつの かずを ひとつずつ くらべる', 'くらべた しるし', '↔'),
+    stage('num_to5', 3, '5までの かず', '1〜5の数', 'g1.number.to5', '1から5までを かぞえて こたえる', '5までの しるし', '5'),
+    stage('num_to10', 4, '10までの かず', '6〜10の数', 'g1.number.to10', '6から10までを かぞえて こたえる', '10までの しるし', '10'),
+    stage('num_check', 5, '1から10の おさらい', '1〜10の確認', 'g1.number.to10.review', 'いろいろな かぞえかたで たしかめる', 'おさらいの しるし', '✓'),
+    stage('num_zero_bonds', 6, '0と かずわけ', '0と数の合成・分解', 'g1.number.zero_bonds', 'ふたつの かずで、もとの かずを つくる', 'かずわけの しるし', '◇'),
+    stage('num_order', 7, 'かずの じゅんばん', '数の順序と大小', 'g1.number.order_compare', 'すうじを ちいさい じゅんに ならべる', 'ならびの しるし', '⇢'),
+    stage('num_ordinal', 8, 'なんばんめ？', '順序数と位置', 'g1.number.ordinal_position', 'どこに あるかを かぞえて こたえる', 'なんばんめの しるし', '◎'),
+    stage('num_to20', 9, '20までの かず', '10といくつ・まとまり', 'g1.number.to20', '10の まとまりと、ばらを かぞえる', '20までの しるし', '20'),
+    stage('num_to100', 10, '100までの かず', '十の位・一の位', 'g1.number.to100', '10の まとまりと、ばらで かずを つくる', '100までの しるし', '100'),
+    stage('num_core', 11, 'かずの まとめ', '数の総合確認', 'g1.number.review', 'いろいろな かずの みかたを たしかめる', 'かずの まとめしるし', '★')
   ];
 
   const ADDITION_STAGES = [
-    stage('garden', 1, 'かぞえる ライト', '10までを数える', 'g1.add.count', 'ライトを必要な数だけ点灯する', 'かぞえのレンズ', '◉'),
-    stage('pairs', 2, 'かずわけ トレイ', '5・7・10を作る', 'g1.add.bonds', '空いた枠へ部品を入れる', 'ペアマグネット', '↔'),
-    stage('delivery', 3, 'あわせる コンベア', '絵の足し算', 'g1.add.combine', '二本のベルトを合流させる', '合流ベルト', '＋'),
-    stage('numbers', 4, 'たしざん ギア', '10までの足し算', 'g1.add.to10', '答えの位置までギアを回す', 'プラスギア', '⚙'),
-    stage('gate', 5, 'きほん チェッカー', '足し算基礎の確認', 'g1.add.to10.review', '四つの操作を切り替えて検査する', 'チェックバッテリー', '✓'),
-    stage('lanterns', 6, '10こ ケース', '20までの数', 'g1.add.to20.count', '10ケースとばら部品を数える', '10こケース', '▦'),
-    stage('blocks', 7, 'つみこみ クレーン', '20までの足し算', 'g1.add.to20', '二つの荷物をクレーンで積み合わせる', '伸縮クレーン', '⌁'),
-    stage('kitchen', 8, '3ぐち ミキサー', '3つの数の足し算', 'g1.add.three_numbers', '三本の投入路を順につなぐ', '3ぐちミキサー', '△'),
-    stage('circuit', 9, 'ひかりの 配線盤', '足し算の反復', 'g1.add.fluency', '正しい答えの回路を配線する', '接続ケーブル', '⌇'),
-    stage('lift', 10, '10づくり リフト', '繰り上がりの足し算', 'g1.add.make_ten', '部品を分けて10枠を満タンにする', '10づくりギア', '10'),
-    stage('core', 11, 'たしざん メインコア', '足し算の総合確認', 'g1.add.review', '絵・式・場面をつないでコアを動かす', '組み立てコア', '★')
+    stage('garden', 1, 'いくつ ある？', '10までを数える', 'g1.add.count', 'おなじ まるを かぞえて こたえる', 'かぞえた しるし', '◉'),
+    stage('pairs', 2, 'かずを わけよう', '5・7・10を作る', 'g1.add.bonds', 'ふたつの かずで、もとの かずを つくる', 'かずわけの しるし', '↔'),
+    stage('delivery', 3, 'あわせると いくつ？', '絵の足し算', 'g1.add.combine', 'ふたつの かずを あわせて こたえる', 'あわせた しるし', '＋'),
+    stage('numbers', 4, '10までの たしざん', '10までの足し算', 'g1.add.to10', 'しきを みて、こたえの かずを えらぶ', 'たしざんの しるし', '＋'),
+    stage('gate', 5, 'たしざん おさらい', '足し算基礎の確認', 'g1.add.to10.review', 'いろいろな たしざんを たしかめる', 'おさらいの しるし', '✓'),
+    stage('lanterns', 6, '20までを かぞえる', '20までの数', 'g1.add.to20.count', '10の まとまりと、ばらを かぞえる', '20までの しるし', '▦'),
+    stage('blocks', 7, '20までの たしざん', '20までの足し算', 'g1.add.to20', 'ふたつの かずを たして こたえる', '20のたしざん しるし', '⌁'),
+    stage('kitchen', 8, '3つの かずを たす', '3つの数の足し算', 'g1.add.three_numbers', '3つの かずを じゅんに たす', '3つのかずの しるし', '△'),
+    stage('circuit', 9, 'たしざん れんしゅう', '足し算の反復', 'g1.add.fluency', 'いろいろな たしざんに こたえる', 'れんしゅうの しるし', '⌇'),
+    stage('lift', 10, '10を つくって たす', '繰り上がりの足し算', 'g1.add.make_ten', '10の まとまりを つくって たす', '10づくりの しるし', '10'),
+    stage('core', 11, 'たしざんの まとめ', '足し算の総合確認', 'g1.add.review', 'え・しき・おはなしの たしざんを たしかめる', 'たしざんの まとめしるし', '★')
   ];
 
   const SUBTRACTION_STAGES = [
-    stage('sub_bonds', 1, 'かずわけ スキャナー', '5・7・10の数の組', 'g1.sub.bonds', '部品を二つのトレイへ分ける', '分解スキャナー', '◇'),
-    stage('sub_remove', 2, 'とりだす コンベア', '絵で理解する引き算', 'g1.sub.remove', '指定された部品を取り出す', '取り出しベルト', '−'),
-    stage('sub_zero', 3, 'ゼロ スイッチ', '0を引く・全部を引く', 'g1.sub.zero_same', '取り出さない・全部取り出すを切り替える', 'ゼロスイッチ', '0'),
-    stage('sub_gear', 4, 'ひきざん ギア', '10までの引き算', 'g1.sub.to10', '答えまでギアを逆回転する', 'マイナスギア', '⚙'),
-    stage('sub_gate', 5, 'きほん チェッカー', '引き算基礎の確認', 'g1.sub.to10.review', '四つの操作を切り替えて検査する', '整理チェックキー', '✓'),
-    stage('sub_teens', 6, '10といくつ ケース', '20までの引き算', 'g1.sub.to20', '10ケースを残して部品を取り出す', '10のこしケース', '▦'),
-    stage('sub_sequence', 7, '3ステップ 配線盤', '3つの数の加減', 'g1.sub.three_numbers', '途中の値を追って配線する', '3れんカウンター', '⇢'),
-    stage('sub_bridge', 8, '10またぎ レール', '繰り下がりの引き算', 'g1.sub.borrow', '数を分けて10の駅を通る', '10またぎレール', '10'),
-    stage('sub_route', 9, 'かずのせん ルート', '数直線で戻る', 'g1.sub.number_line', '車両を後ろへ動かす', '戻りルート盤', '↶'),
-    stage('sub_meter', 10, '100の メーター', '位取りと簡単な引き算', 'g1.sub.to100', '十の束と一の部品を整理する', '位取りメーター', '100'),
-    stage('sub_core', 11, 'ひきざん メインコア', '引き算の総合確認', 'g1.sub.review', '残り・違い・式をつないでコアを動かす', '整理コア', '★')
+    stage('sub_bonds', 1, 'かずを わけよう', '5・7・10の数の組', 'g1.sub.bonds', 'ひとつの かずを ふたつに わける', 'かずわけの しるし', '◇'),
+    stage('sub_remove', 2, 'のこりは いくつ？', '絵で理解する引き算', 'g1.sub.remove', 'いくつか とって、のこりを こたえる', 'のこりの しるし', '−'),
+    stage('sub_zero', 3, '0の ひきざん', '0を引く・全部を引く', 'g1.sub.zero_same', '0を ひくときと、ぜんぶ ひくときを かんがえる', '0の しるし', '0'),
+    stage('sub_gear', 4, '10までの ひきざん', '10までの引き算', 'g1.sub.to10', 'しきを みて、こたえの かずを えらぶ', 'ひきざんの しるし', '−'),
+    stage('sub_gate', 5, 'ひきざん おさらい', '引き算基礎の確認', 'g1.sub.to10.review', 'いろいろな ひきざんを たしかめる', 'おさらいの しるし', '✓'),
+    stage('sub_teens', 6, '20までの ひきざん', '20までの引き算', 'g1.sub.to20', '20までの かずから ひいて こたえる', '20のひきざん しるし', '▦'),
+    stage('sub_sequence', 7, '3つの かず', '3つの数の加減', 'g1.sub.three_numbers', '3つの かずを じゅんに たしたり ひいたりする', '3つのかずの しるし', '⇢'),
+    stage('sub_bridge', 8, '10を つかって ひく', '繰り下がりの引き算', 'g1.sub.borrow', '10の まとまりを つかって ひく', '10をつかう しるし', '10'),
+    stage('sub_route', 9, 'かずのせんで ひく', '数直線で戻る', 'g1.sub.number_line', 'かずの せんを もどって こたえる', 'かずのせんの しるし', '↶'),
+    stage('sub_meter', 10, '100までの ひきざん', '位取りと簡単な引き算', 'g1.sub.to100', '10の まとまりと、ばらを みて ひく', '100までの しるし', '100'),
+    stage('sub_core', 11, 'ひきざんの まとめ', '引き算の総合確認', 'g1.sub.review', 'のこり・ちがい・しきを たしかめる', 'ひきざんの まとめしるし', '★')
   ];
 
   const MEASURE_STAGES = [
-    stage('measure_length_direct', 1, '長さくらべ台', '長さの直接比較', 'g1.measure.length.direct', '端をそろえて二本の部品を比べる', 'そろえストッパー', '↕'),
-    stage('measure_length_indirect', 2, 'うつし取りテープ', '長さの間接比較', 'g1.measure.length.indirect', '長さをテープへ写して運ぶ', 'コピー巻尺', '〰'),
-    stage('measure_length_unit', 3, 'いくつ分カウンター', '任意単位で長さを表す', 'g1.measure.length.unit', '同じ部品を隙間なく並べる', '単位スタンプ', '▤'),
-    stage('measure_method', 4, '比べ方セレクター', '比較方法を選ぶ', 'g1.measure.method', '場面に合う道具と作業台を選ぶ', '方法セレクター', '⌘'),
-    stage('measure_length_check', 5, '長さチェッカー', '長さ比較の確認', 'g1.measure.length.review', '四つの比較操作を切り替える', '長さチェック盤', '✓'),
-    stage('measure_capacity', 6, 'かさ比較タンク', 'かさを比べる', 'g1.measure.capacity', '同じカップでタンクへ注ぐ', '注水カップ', '◒'),
-    stage('measure_area', 7, '広さ比較パネル', '広さを比べる', 'g1.measure.area', 'パネルを重ね、同じマスで埋める', '面積タイル', '▦'),
-    stage('measure_hour', 8, 'なんじ時計', '何時を読む', 'g1.time.hour', '時計の針を指定時刻へ動かす', '時刻ギア', '◷'),
-    stage('measure_half', 9, 'なんじはん時計', '何時半を読む', 'g1.time.half_hour', '長針と短針を連動させる', '半時ギア', '◴'),
-    stage('measure_minute', 10, 'なんじなんぷん時計', '何時何分を読む', 'g1.time.minute', '二本の針を細かく調整する', '分刻みギア', '◶'),
-    stage('measure_core', 11, '計測メインコア', '計測の総合確認', 'g1.measure.review', '長さ・かさ・広さ・時刻を使い分ける', '計測コア', '★')
+    stage('measure_length_direct', 1, 'どちらが ながい？', '長さの直接比較', 'g1.measure.length.direct', 'はしを そろえて、2ほんの ながさを くらべる', 'ながさの しるし', '↕'),
+    stage('measure_length_indirect', 2, 'うつして くらべよう', '長さの間接比較', 'g1.measure.length.indirect', 'テープに うつして、ながさを くらべる', 'うつした しるし', '〰'),
+    stage('measure_length_unit', 3, 'ブロックで はかろう', '任意単位で長さを表す', 'g1.measure.length.unit', 'おなじ ブロックを すきまなく ならべる', 'はかった しるし', '▤'),
+    stage('measure_method', 4, 'どうやって くらべる？', '比較方法を選ぶ', 'g1.measure.method', 'ものに あう くらべかたを えらぶ', 'くらべ方の しるし', '⌘'),
+    stage('measure_length_check', 5, 'ながさの おさらい', '長さ比較の確認', 'g1.measure.length.review', 'いろいろな ながさの くらべかたを たしかめる', 'ながさの おさらいしるし', '✓'),
+    stage('measure_capacity', 6, 'どちらが おおい？', 'かさを比べる', 'g1.measure.capacity', 'おなじ カップで、はいる りょうを くらべる', 'かさの しるし', '◒'),
+    stage('measure_area', 7, 'どちらが ひろい？', '広さを比べる', 'g1.measure.area', 'おなじ マスの かずで、ひろさを くらべる', 'ひろさの しるし', '▦'),
+    stage('measure_hour', 8, 'なんじ？', '何時を読む', 'g1.time.hour', 'とけいを みて こたえたり、はりを うごかしたりする', 'なんじの しるし', '◷'),
+    stage('measure_half', 9, 'なんじはん？', '何時半を読む', 'g1.time.half_hour', 'なんじはんか こたえたり、はりを うごかしたりする', 'なんじはんの しるし', '◴'),
+    stage('measure_minute', 10, 'なんじなんぷん？', '何時何分を読む', 'g1.time.minute', 'じこくを こたえたり、はりを うごかしたりする', 'じこくの しるし', '◶'),
+    stage('measure_core', 11, 'くらべる まとめ', '計測の総合確認', 'g1.measure.review', 'ながさ・かさ・ひろさ・じこくを たしかめる', 'くらべる まとめしるし', '★')
   ];
 
   const SHAPE_STAGES = [
-    stage('shape_find', 1, '形さがしスキャナー', '身の回りの形', 'g1.shape.find', '似た形の部品をスキャンする', '形さがしレンズ', '○'),
-    stage('shape_function', 2, 'ころがる・つめる台', '立体の働き', 'g1.shape.function', '転がす・積む動作を選ぶ', '動きテスター', '◫'),
-    stage('shape_sort', 3, '立体仕分け棚', '立体の分類', 'g1.shape.sort_solids', '特徴に合う棚へ部品を入れる', '立体ラベル', '▣'),
-    stage('shape_faces', 4, '面スタンプ台', '立体の面と平面図形', 'g1.shape.faces', '面をスタンプして形を調べる', '面スタンプ', '□'),
-    stage('shape_solids_check', 5, '立体チェッカー', '立体の特徴の確認', 'g1.shape.solids.review', '四つの立体操作を切り替える', '立体チェック盤', '✓'),
-    stage('shape_tiles', 6, '色板組み立て台', '色板で形を作る', 'g1.shape.compose_tiles', 'マスを選んで見本を組み立てる', '色板ジョイント', '◆'),
-    stage('shape_decompose', 7, '形分解カッター', '形の分解・移動・回転', 'g1.shape.decompose', '切り分けた部品の移動先を選ぶ', '回転カッター', '◩'),
-    stage('shape_sticks', 8, '数え棒設計台', '棒で形を作る', 'g1.shape.compose_sticks', '必要な棒を点灯して形を作る', '棒コネクター', '△'),
-    stage('shape_dots', 9, 'ドット図形盤', '点を結んで形を作る', 'g1.shape.dot_grid', '見本と同じ点を順に選ぶ', 'ドット配線', '⠿'),
-    stage('shape_position', 10, '位置コピー装置', '上下・左右・前後', 'g1.shape.position', '指示どおりのマスへ部品を置く', '位置コピーキー', '⌖'),
-    stage('shape_core', 11, 'かたちメインコア', '形の総合確認', 'g1.shape.review', '立体・平面・構成・位置を使い分ける', 'かたちコア', '★')
+    stage('shape_find', 1, 'にている かたち', '身の回りの形', 'g1.shape.find', 'ものと にている かたちを えらぶ', 'かたちの しるし', '○'),
+    stage('shape_function', 2, 'ころがる？ つめる？', '立体の働き', 'g1.shape.function', 'ころがるか、つめるかを かんがえる', 'うごきの しるし', '◫'),
+    stage('shape_sort', 3, 'かたちを わけよう', '立体の分類', 'g1.shape.sort_solids', 'かたちの とくちょうで わける', 'なかまの しるし', '▣'),
+    stage('shape_faces', 4, 'うつる かたち', '立体の面と平面図形', 'g1.shape.faces', 'ものの めんを うつした かたちを えらぶ', 'めんの しるし', '□'),
+    stage('shape_solids_check', 5, 'かたちの おさらい', '立体の特徴の確認', 'g1.shape.solids.review', 'いろいろな かたちを たしかめる', 'おさらいの しるし', '✓'),
+    stage('shape_tiles', 6, 'いろいたで つくろう', '色板で形を作る', 'g1.shape.compose_tiles', 'みほんと おなじ かたちを つくる', 'いろいたの しるし', '◆'),
+    stage('shape_decompose', 7, 'かたちを わけよう', '形の分解・移動・回転', 'g1.shape.decompose', 'かたちを わけたり、うごかしたりする', 'かたちわけの しるし', '◩'),
+    stage('shape_sticks', 8, 'ぼうを えらぼう', '棒で形を作る', 'g1.shape.compose_sticks', 'かたちに ひつような ぼうを えらぶ', 'ぼうの しるし', '△'),
+    stage('shape_dots', 9, 'てんで つくろう', '点を結んで形を作る', 'g1.shape.dot_grid', 'てんを えらんで かたちを つくる', 'てんの しるし', '⠿'),
+    stage('shape_position', 10, 'どこに ある？', '上下・左右・前後', 'g1.shape.position', 'うえ・した・ひだり・みぎを かんがえる', 'ばしょの しるし', '⌖'),
+    stage('shape_core', 11, 'かたちの まとめ', '形の総合確認', 'g1.shape.review', 'いろいろな かたちを たしかめる', 'かたちの まとめしるし', '★')
   ];
 
   const SOLVE_STAGES = [
-    stage('solve_classify', 1, '仕分けトレイ', '資料を分類する', 'g1.data.classify', '決めた観点でカードを分ける', 'データラベル', '◌'),
-    stage('solve_align', 2, '並べるカウンター', '並べて個数を比べる', 'g1.data.align', 'カードを一列にそろえる', '整列レール', '▥'),
-    stage('solve_pictograph', 3, '絵グラフ表示盤', '絵グラフを作る', 'g1.data.pictograph', '必要な数だけグラフを点灯する', '絵グラフライト', '▤'),
-    stage('solve_read', 4, 'グラフ読取モニター', 'グラフを読み取る', 'g1.data.read', '多い・少ない・差を読み取る', '読取モニター', '▧'),
-    stage('solve_data_check', 5, 'データチェッカー', '分類とグラフの確認', 'g1.data.review', '四つのデータ操作を切り替える', 'データチェック盤', '✓'),
-    stage('solve_operation', 6, 'たす・ひくセレクター', '場面から演算を選ぶ', 'g1.problem.operation_choice', '場面を再生してギアを選ぶ', '演算セレクター', '±'),
-    stage('solve_model', 7, 'お話式メーカー', '文章を式にする', 'g1.problem.model', 'お話カードと式をつなぐ', '式メーカー', '＝'),
-    stage('solve_relation', 8, '関係図モニター', '数量の関係を図で考える', 'g1.problem.relation', '全体と部分を関係図へ置く', '関係ジョイント', '⊕'),
-    stage('solve_match', 9, '図・式ルート盤', '図・式・文章の対応', 'g1.problem.match', '三つの表現を正しい回路でつなぐ', '表現ケーブル', '⌇'),
-    stage('solve_groups', 10, '同じ数ずつ分配機', '同じ数ずつまとめる・分ける', 'g1.problem.equal_groups', '部品を同じ数ずつ配る', '等分アーム', '∷'),
-    stage('solve_core', 11, '解決メインコア', '表・図・式・文章の総合', 'g1.problem.review', 'どの道具で解くか自分で選ぶ', '解決コア', '★')
+    stage('solve_classify', 1, 'カードを わけよう', '資料を分類する', 'g1.data.classify', 'おなじ なかまの カードを わける', 'なかまの しるし', '◌'),
+    stage('solve_align', 2, 'ならべて くらべよう', '並べて個数を比べる', 'g1.data.align', 'カードを いちれつに ならべて かぞえる', 'ならべた しるし', '▥'),
+    stage('solve_pictograph', 3, 'えグラフを つくろう', '絵グラフを作る', 'g1.data.pictograph', 'しるしを ならべて グラフを つくる', 'グラフの しるし', '▤'),
+    stage('solve_read', 4, 'グラフを よもう', 'グラフを読み取る', 'g1.data.read', 'どれが おおいか、すくないかを こたえる', 'よみとった しるし', '▧'),
+    stage('solve_data_check', 5, 'グラフの おさらい', '分類とグラフの確認', 'g1.data.review', 'カードと グラフを たしかめる', 'おさらいの しるし', '✓'),
+    stage('solve_operation', 6, 'たす？ ひく？', '場面から演算を選ぶ', 'g1.problem.operation_choice', 'おはなしを みて、たすか ひくかを えらぶ', 'たすひくの しるし', '±'),
+    stage('solve_model', 7, 'おはなしと しき', '文章を式にする', 'g1.problem.model', 'おはなしに あう しきを えらぶ', 'しきの しるし', '＝'),
+    stage('solve_relation', 8, 'ぜんぶと いくつか', '数量の関係を図で考える', 'g1.problem.relation', 'ぜんぶの かずと、わけた かずを かんがえる', 'かんけいの しるし', '⊕'),
+    stage('solve_match', 9, 'え・しき・おはなし', '図・式・文章の対応', 'g1.problem.match', 'おなじ ことを あらわす ものを えらぶ', 'つながりの しるし', '⌇'),
+    stage('solve_groups', 10, 'おなじ かずずつ', '同じ数ずつまとめる・分ける', 'g1.problem.equal_groups', 'おなじ かずずつに わける', 'わけた しるし', '∷'),
+    stage('solve_core', 11, 'おはなしの まとめ', '表・図・式・文章の総合', 'g1.problem.review', 'グラフ・え・しき・おはなしを たしかめる', 'おはなしの まとめしるし', '★')
   ];
 
   const ZONES = [
@@ -102,12 +102,12 @@
   ];
 
   const LINES = {
-    number: { id: 'number', name: 'かず 基礎ライン', short: 'かず', symbol: '123', accent: '#27c2a4', pale: '#dffaf4', stages: NUMBER_STAGES, zones: ZONES, description: '数える、比べる、並べる。すべての算数を動かす基礎ライン。' },
-    addition: { id: 'addition', name: 'たしざん 組み立てライン', short: 'たしざん', symbol: '＋', accent: '#ff7b54', pale: '#fff0e9', stages: ADDITION_STAGES, zones: ZONES, description: '二つの量を合わせ、10を作って大きな数へ進むライン。' },
-    subtraction: { id: 'subtraction', name: 'ひきざん 整理ライン', short: 'ひきざん', symbol: '−', accent: '#ee5f8a', pale: '#ffe9f0', stages: SUBTRACTION_STAGES, zones: ZONES, description: '取り出す、残す、違いを見る。数を整理するライン。' },
-    measure: { id: 'measure', name: 'くらべる 計測ライン', short: 'くらべる', symbol: '↕', accent: '#2e9be8', pale: '#e7f5ff', stages: MEASURE_STAGES, zones: ZONES, description: '長さ、かさ、広さ、時刻を道具と操作で比べるライン。' },
-    shape: { id: 'shape', name: 'かたち 設計ライン', short: 'かたち', symbol: '◆', accent: '#8b70e8', pale: '#f0ecff', stages: SHAPE_STAGES, zones: ZONES, description: '転がす、積む、組み立てる。形の働きを調べるライン。' },
-    solve: { id: 'solve', name: 'しらべる 解決ライン', short: 'しらべる', symbol: '▥', accent: '#e5a31a', pale: '#fff6db', stages: SOLVE_STAGES, zones: ZONES, description: '分類、グラフ、文章、式をつないで問題を解決するライン。' }
+    number: { id: 'number', name: 'かず', short: 'かず', symbol: '123', accent: '#27c2a4', pale: '#dffaf4', stages: NUMBER_STAGES, zones: ZONES, description: 'かずを かぞえる、くらべる、じゅんに ならべる。' },
+    addition: { id: 'addition', name: 'たしざん', short: 'たしざん', symbol: '＋', accent: '#ff7b54', pale: '#fff0e9', stages: ADDITION_STAGES, zones: ZONES, description: 'ふたつの かずを あわせて、ぜんぶで いくつか かんがえる。' },
+    subtraction: { id: 'subtraction', name: 'ひきざん', short: 'ひきざん', symbol: '−', accent: '#ee5f8a', pale: '#ffe9f0', stages: SUBTRACTION_STAGES, zones: ZONES, description: 'いくつか とって、のこりや ちがいを かんがえる。' },
+    measure: { id: 'measure', name: 'ながさ・とけい', short: 'くらべる', symbol: '↕', accent: '#2e9be8', pale: '#e7f5ff', stages: MEASURE_STAGES, zones: ZONES, description: 'ながさ・かさ・ひろさを くらべて、とけいを よむ。' },
+    shape: { id: 'shape', name: 'かたち', short: 'かたち', symbol: '◆', accent: '#8b70e8', pale: '#f0ecff', stages: SHAPE_STAGES, zones: ZONES, description: 'ころがす、つむ、ならべる。かたちを よく みる。' },
+    solve: { id: 'solve', name: 'おはなし・グラフ', short: 'しらべる', symbol: '▥', accent: '#e5a31a', pale: '#fff6db', stages: SOLVE_STAGES, zones: ZONES, description: 'カードや グラフを しらべて、おはなしに あう しきを かんがえる。' }
   };
 
   const ISLANDS = LINES;
@@ -237,6 +237,20 @@
     return hashString(JSON.stringify(semantic));
   }
 
+  function questionContentSignature(question) {
+    return hashString(JSON.stringify({
+      skill: question.canonicalSkillId,
+      kind: question.kind,
+      prompt: question.prompt,
+      instruction: question.instruction,
+      correct: question.correct,
+      visual: question.visual || {},
+      math: question.math || null,
+      template: question.templateId || null,
+      story: Boolean(question.story)
+    }));
+  }
+
   function finalizeQuestion(data, rng) {
     const question = Object.assign({
       kind: 'choice',
@@ -280,9 +294,11 @@
 
   function numericQuestion(config, rng) {
     const correct = config.correct;
+    const kind = config.kind || 'slider';
+    const usesOptions = kind === 'choice' || kind === 'route' || kind === 'sort';
     return finalizeQuestion(Object.assign({
-      kind: config.kind || 'slider',
-      options: numberChoices(correct, config.min == null ? 0 : config.min, config.max == null ? Math.max(20, correct + 5) : config.max, 4, rng),
+      kind: kind,
+      options: usesOptions ? numberChoices(correct, config.min == null ? 0 : config.min, config.max == null ? Math.max(20, correct + 5) : config.max, 4, rng) : [],
       input: config.start == null ? '' : config.start,
       min: config.min == null ? 0 : config.min,
       max: config.max == null ? 20 : config.max,
@@ -298,36 +314,120 @@
     { name: 'ボール', icon: '●', feature: 'ころがる', face: 'まる' }
   ];
 
+  const SHAPE_ACTION_CASES = [
+    { name: 'ティッシュの はこ', icon: '▣', correct: 'つめる' },
+    { name: 'さいころ', icon: '▦', correct: 'つめる' },
+    { name: 'しかくい ブロック', icon: '▣', correct: 'つめる' },
+    { name: 'けしゴム', icon: '▣', correct: 'つめる' },
+    { name: 'えほん', icon: '▣', correct: 'つめる' },
+    { name: 'しかくい つみき', icon: '▣', correct: 'つめる' },
+    { name: 'ボール', icon: '●', correct: 'ころがる' },
+    { name: 'ビーだま', icon: '●', correct: 'ころがる' },
+    { name: 'テニスボール', icon: '●', correct: 'ころがる' },
+    { name: 'ピンポンだま', icon: '●', correct: 'ころがる' },
+    { name: 'スーパーボール', icon: '●', correct: 'ころがる' },
+    { name: 'まるい たま', icon: '●', correct: 'ころがる' },
+    { name: 'かん', icon: '▥', correct: 'どちらも' },
+    { name: 'かみの つつ', icon: '▥', correct: 'どちらも' },
+    { name: 'テープの しん', icon: '▥', correct: 'どちらも' },
+    { name: 'まるい のり', icon: '▥', correct: 'どちらも' },
+    { name: 'トイレットペーパー', icon: '▥', correct: 'どちらも' },
+    { name: 'まるい つつ', icon: '▥', correct: 'どちらも' }
+  ];
+
+  const SHAPE_FACE_CASES = [
+    { name: 'ティッシュの はこの そこ', icon: '▣', face: 'しかく' },
+    { name: 'さいころの めん', icon: '▦', face: 'しかく' },
+    { name: 'しかくい ブロックの めん', icon: '▣', face: 'しかく' },
+    { name: 'ちいさい はこの そこ', icon: '▣', face: 'しかく' },
+    { name: 'けしゴムの ひらたい めん', icon: '▣', face: 'しかく' },
+    { name: 'えほんの おもて', icon: '▣', face: 'しかく' },
+    { name: 'つみきの ひらたい めん', icon: '▣', face: 'しかく' },
+    { name: 'おかしの はこの そこ', icon: '▣', face: 'しかく' },
+    { name: 'カードの おもて', icon: '▣', face: 'しかく' },
+    { name: 'かんの そこ', icon: '▥', face: 'まる' },
+    { name: 'かみの つつの はし', icon: '▥', face: 'まる' },
+    { name: 'テープの しんの はし', icon: '▥', face: 'まる' },
+    { name: 'まるい コップの そこ', icon: '▥', face: 'まる' },
+    { name: 'ペットボトルの ふた', icon: '▥', face: 'まる' },
+    { name: 'まるい のりの そこ', icon: '▥', face: 'まる' },
+    { name: 'トイレットペーパーの はし', icon: '▥', face: 'まる' },
+    { name: 'びんの そこ', icon: '▥', face: 'まる' },
+    { name: 'まるい おさらの そこ', icon: '▥', face: 'まる' }
+  ];
+
   function selectorQuestion(target, total, config, rng) {
     return finalizeQuestion(Object.assign({
       kind: 'tap',
       correct: target,
       input: 0,
       instruction: String(target) + 'こ えらんで「けってい」',
-      visual: { type: 'selector', total, icons: shuffle(PARTS, rng) }
+      visual: { type: 'selector', total, icons: Array.from({ length: total }, function () { return 'count-dot'; }) }
     }, config), rng);
   }
 
   function buildNumberQuestion(stageIndex, round, rng) {
     if (stageIndex === 0) {
-      const cases = [
-        { item: '●', label: 'まるい部品', correct: 'まるい', options: ['まるい', 'かくばった'] },
-        { item: '■', label: 'しかくい部品', correct: 'かくばった', options: ['まるい', 'かくばった'] },
-        { item: '💡', label: 'ひかる部品', correct: 'ひかる', options: ['ひかる', 'まわる', 'つなぐ'] },
-        { item: '⚙️', label: 'まわる部品', correct: 'まわる', options: ['ひかる', 'まわる', 'つなぐ'] },
-        { item: '🔧', label: 'つなぐ道具', correct: 'つなぐ', options: ['ひかる', 'まわる', 'つなぐ'] }
-      ];
-      const item = pick(cases, rng);
-      return finalizeQuestion({
+      const n = rand(1, 5, rng);
+      const variant = round % 4;
+      if (variant === 1) {
+        return selectorQuestion(n, 5, {
+          canonicalSkillId: NUMBER_STAGES[0].canonicalSkillId,
+          prompt: n + 'この まるを えらぼう。',
+          instruction: 'まるを ' + n + 'こ タップして「けってい」',
+          visual: { type: 'selector', total: 5, icons: ['count-dot', 'count-dot', 'count-dot', 'count-dot', 'count-dot'] },
+          hint: 'タップした まるを、1から かぞえよう。',
+          explain: 'まるを ' + n + 'こ えらべたね。',
+          templateId: 'number.to5.tap',
+          interactionFamily: 'number.to5:tap'
+        }, rng);
+      }
+      if (variant === 2) {
+        return numericQuestion({
+          canonicalSkillId: NUMBER_STAGES[0].canonicalSkillId,
+          kind: 'input',
+          prompt: 'まるは いくつ？',
+          instruction: 'かぞえて、すうじを いれよう',
+          correct: n,
+          min: 1,
+          max: 5,
+          visual: { type: 'five-frame', count: n },
+          hint: 'ひだりから、1、2、と かぞえよう。',
+          explain: 'まるは ' + n + 'こ。すうじでは「' + n + '」だよ。',
+          templateId: 'number.to5.frame',
+          interactionFamily: 'number.to5:input'
+        }, rng);
+      }
+      if (variant === 3) {
+        return numericQuestion({
+          canonicalSkillId: NUMBER_STAGES[0].canonicalSkillId,
+          kind: 'slider',
+          prompt: 'まるは いくつ？',
+          instruction: '−と＋で かずを あわせよう',
+          correct: n,
+          min: 1,
+          max: 5,
+          start: 1,
+          visual: { type: 'objects', count: n, icon: 'count-dot' },
+          hint: 'まるを ひとつずつ かぞえよう。',
+          explain: 'まるは ' + n + 'こだね。',
+          templateId: 'number.to5.adjust',
+          interactionFamily: 'number.to5:adjust'
+        }, rng);
+      }
+      return numericQuestion({
         canonicalSkillId: NUMBER_STAGES[0].canonicalSkillId,
-        kind: 'sort',
-        prompt: item.label + 'を どのトレイへ 入れる？',
-        instruction: '部品を見て、トレイをえらぼう',
-        correct: item.correct,
-        options: item.options,
-        visual: { type: 'sort', item: item.item, bins: item.options },
-        hint: '色ではなく、形や動きに ちゅうもくしよう。',
-        explain: item.label + 'は「' + item.correct + '」トレイに入るよ。'
+        kind: 'choice',
+        prompt: 'まるは いくつ？',
+        instruction: 'かぞえて、すうじを えらぼう',
+        correct: n,
+        min: 1,
+        max: 5,
+        visual: { type: 'objects', count: n, icon: 'count-dot' },
+        hint: 'ひだりから、まるを ひとつずつ かぞえよう。',
+        explain: 'まるは ' + n + 'こ。すうじでは「' + n + '」だよ。',
+        templateId: 'number.to5.choice',
+        interactionFamily: 'number.to5:choice'
       }, rng);
     }
     if (stageIndex === 1) {
@@ -338,12 +438,12 @@
       return finalizeQuestion({
         canonicalSkillId: NUMBER_STAGES[1].canonicalSkillId,
         kind: 'choice',
-        prompt: '一つずつ つないだら、どちらが 多い？',
-        instruction: 'ペアを作るつもりで くらべよう',
+        prompt: 'まるが おおいのは どっち？',
+        instruction: '「ひだり」「おなじ」「みぎ」から えらぼう',
         correct,
         options: ['ひだり', 'おなじ', 'みぎ'],
         visual: { type: 'compare-groups', left, right },
-        hint: 'ひだりと みぎを 一つずつ ペアにしてみよう。',
+        hint: 'ひだりと みぎを、ひとつずつ くみあわせよう。',
         explain: left + 'こと' + right + 'こだから、' + correct + 'だよ。'
       }, rng);
     }
@@ -351,25 +451,29 @@
       const max = stageIndex === 2 ? 5 : 10;
       const min = stageIndex === 2 ? 1 : 6;
       const n = rand(min, max, rng);
-      if (round % 3 === 0) {
+      const variant = round % 4;
+      if (variant === 0) {
         return selectorQuestion(n, max, {
           canonicalSkillId: NUMBER_STAGES[stageIndex].canonicalSkillId,
-          prompt: n + 'この ライトを つけよう。',
-          hint: '一つずつ さわりながら 数えよう。',
-          explain: 'ライトを ' + n + 'こ つけられたね。'
+          prompt: 'まるを ' + n + 'こ えらぼう。',
+          hint: 'えらんだ まるを、ひとつずつ かぞえよう。',
+          explain: 'まるを ' + n + 'こ えらべたね。'
         }, rng);
       }
       return numericQuestion({
         canonicalSkillId: NUMBER_STAGES[stageIndex].canonicalSkillId,
-        kind: round % 3 === 1 ? 'choice' : 'slider',
-        prompt: '部品は ぜんぶで いくつ？',
+        kind: variant === 1 ? 'choice' : variant === 2 ? 'slider' : 'input',
+        prompt: 'まるは ぜんぶで いくつ？',
+        instruction: variant === 1 ? 'かぞえて、すうじを えらぼう' : variant === 2 ? '−と＋で かずを あわせよう' : 'かぞえて、すうじを いれよう',
         correct: n,
         min: 0,
         max,
         start: 0,
-        visual: { type: 'objects', count: n, icon: pick(PARTS, rng) },
-        hint: '左から 一つずつ 数えよう。',
-        explain: '数えると ' + n + 'こ。数字の「' + n + '」と同じだよ。'
+        visual: { type: 'objects', count: n, icon: 'count-dot' },
+        templateId: variant === 1 ? 'number.count.choice' : variant === 2 ? 'number.count.adjust' : 'number.count.input',
+        interactionFamily: variant === 1 ? 'number.count:choice' : variant === 2 ? 'number.count:adjust' : 'number.count:input',
+        hint: 'ひだりから ひとつずつ かぞえよう。',
+        explain: 'かぞえると ' + n + 'こ。すうじの「' + n + '」と おなじだよ。'
       }, rng);
     }
     if (stageIndex === 4) {
@@ -402,12 +506,12 @@
         return finalizeQuestion({
           canonicalSkillId: NUMBER_STAGES[6].canonicalSkillId,
           kind: 'order',
-          prompt: '小さい じゅんに 車両を つなごう。',
-          instruction: '数字を じゅんばんにタップして「けってい」',
+          prompt: 'すうじを ちいさい じゅんに ならべよう。',
+          instruction: 'すうじを じゅんばんに タップして「けってい」',
           correct: values.join(','),
           options: shuffled,
           visual: { type: 'rail', min: start, max: start + 3 },
-          hint: 'いちばん 小さい数から 一つずつ 大きくしよう。',
+          hint: 'いちばん ちいさい かずから、ひとつずつ おおきくしよう。',
           explain: values.join('、') + 'の じゅんだね。'
         }, rng);
       }
@@ -417,17 +521,17 @@
       return numericQuestion({
         canonicalSkillId: NUMBER_STAGES[6].canonicalSkillId,
         kind: 'route',
-        prompt: 'レールの「？」に 入る数は？',
+        prompt: '「？」に はいる かずは？',
         correct,
         min: Math.max(0, start - 2),
         max: start + 5,
         visual: { type: 'number-line', values: shown },
-        hint: '一つずつ 大きくなる レールだよ。',
+        hint: 'ひとつずつ おおきくなる かずの ならびだよ。',
         explain: shown.join('、').replace('?', String(correct)) + 'と ならぶよ。'
       }, rng);
     }
     if (stageIndex === 7) {
-      const row = shuffle(['🔧', '⚙️', '💡', '🔋', '🔩'], rng);
+      const row = shuffle(['1', '2', '3', '4', '5'], rng);
       const fromRight = round % 2 === 1;
       const ordinal = rand(1, 5, rng);
       const index = fromRight ? row.length - ordinal : ordinal - 1;
@@ -466,7 +570,7 @@
       return numericQuestion({
         canonicalSkillId: NUMBER_STAGES[8].canonicalSkillId,
         kind: round % 2 ? 'slider' : 'choice',
-        prompt: '10こケースと ばら部品。ぜんぶで いくつ？',
+        prompt: '10の まとまりと、ばら。ぜんぶで いくつ？',
         correct: n,
         min: 10,
         max: 20,
@@ -497,14 +601,14 @@
       return numericQuestion({
         canonicalSkillId: NUMBER_STAGES[9].canonicalSkillId,
         kind: round % 2 ? 'slider' : 'choice',
-        prompt: '十の束が' + tens + 'こ、一の部品が' + ones + 'こ。いくつ？',
+        prompt: '10の まとまりが' + tens + 'こ、ばらが' + ones + 'こ。いくつ？',
         correct,
         min: 0,
         max: 100,
         step: 1,
         start: tens * 10,
         visual: { type: 'place-value', tens, ones },
-        hint: '十の束は' + (tens * 10) + '。そこへ一の部品を 合わせよう。',
+        hint: '10の まとまりで' + (tens * 10) + '。そこへ ばらを あわせよう。',
         explain: (tens * 10) + 'と' + ones + 'で' + correct + '。'
       }, rng);
     }
@@ -534,10 +638,9 @@
   function additionStory(max, carry, rng) {
     const values = additionValues(max, carry, rng);
     const scenes = [
-      ['あかいボルト', 'あおいボルト', '組み立てトレイ'],
-      ['まるいライト', 'しかくいライト', '点検パネル'],
-      ['小さいギア', '大きいギア', '部品ケース'],
-      ['朝に届いた部品', '昼に届いた部品', '受け取り台']
+      ['あかい おはじき', 'あおい おはじき', 'はこ'],
+      ['あさに ひろった どんぐり', 'ひるに ひろった どんぐり', 'ふくろ'],
+      ['あかい つみき', 'きいろい つみき', 'はこ']
     ];
     const scene = pick(scenes, rng);
     return numericQuestion({
@@ -548,7 +651,7 @@
       min: 0,
       max,
       story: true,
-      visual: { type: 'story', icons: ['🔩', '⚙️'], counts: [values[0], values[1]], operation: '+' },
+      visual: { type: 'story', icons: ['count-dot', 'count-dot'], counts: [values[0], values[1]], operation: '+' },
       hint: '「ぜんぶで」だから、二つの数を 合わせよう。',
       explain: values[0] + '＋' + values[1] + '＝' + values[2] + '。ぜんぶで' + values[2] + 'こ。',
       math: { kind: 'add', a: values[0], b: values[1], result: values[2] }
@@ -561,11 +664,30 @@
     }
     if (stageIndex === 0) {
       const n = rand(2, 10, rng);
-      return selectorQuestion(n, 10, {
+      const variant = round % 3;
+      if (variant === 0) {
+        return selectorQuestion(n, 10, {
+          canonicalSkillId: ADDITION_STAGES[0].canonicalSkillId,
+          prompt: 'まるを ' + n + 'こ えらぼう。',
+          hint: 'えらんだ まるを、ひとつずつ かぞえよう。',
+          explain: 'まるを ' + n + 'こ えらべたね。',
+          templateId: 'addition.count.tap',
+          interactionFamily: 'addition.count:tap'
+        }, rng);
+      }
+      return numericQuestion({
         canonicalSkillId: ADDITION_STAGES[0].canonicalSkillId,
-        prompt: n + 'この ライトを つけよう。',
-        hint: '一つずつ さわりながら 数えよう。',
-        explain: n + 'こ ぴったり 点灯できたね。'
+        kind: variant === 1 ? 'choice' : 'input',
+        prompt: 'まるは いくつ？',
+        instruction: variant === 1 ? 'かぞえて、すうじを えらぼう' : 'かぞえて、すうじを いれよう',
+        correct: n,
+        min: 1,
+        max: 10,
+        visual: { type: 'objects', count: n, icon: 'count-dot' },
+        hint: 'ひだりから、ひとつずつ かぞえよう。',
+        explain: 'まるは ' + n + 'こだね。',
+        templateId: variant === 1 ? 'addition.count.choice' : 'addition.count.input',
+        interactionFamily: variant === 1 ? 'addition.count:choice' : 'addition.count:input'
       }, rng);
     }
     if (stageIndex === 1) {
@@ -575,7 +697,7 @@
       return numericQuestion({
         canonicalSkillId: ADDITION_STAGES[1].canonicalSkillId,
         kind: round % 2 ? 'tap' : 'slider',
-        prompt: target + 'こトレイ。' + known + 'こ あるよ。あと いくつ 入れる？',
+        prompt: target + 'こに したい。いま ' + known + 'こ。あと いくつ？',
         correct,
         min: 0,
         max: target,
@@ -591,7 +713,7 @@
       return numericQuestion({
         canonicalSkillId: ADDITION_STAGES[stageIndex].canonicalSkillId,
         kind: stageIndex === 2 ? (round % 2 ? 'tap' : 'choice') : (round % 2 ? 'route' : 'slider'),
-        prompt: stageIndex === 2 ? '二本のコンベアを 合わせると いくつ？' : values[0] + '＋' + values[1] + 'の ギアを 合わせよう。',
+        prompt: stageIndex === 2 ? values[0] + 'こと ' + values[1] + 'こ。あわせると いくつ？' : values[0] + '＋' + values[1] + 'は いくつ？',
         correct: values[2],
         min: 0,
         max: 10,
@@ -611,7 +733,7 @@
       return numericQuestion({
         canonicalSkillId: ADDITION_STAGES[5].canonicalSkillId,
         kind: round % 2 ? 'choice' : 'slider',
-        prompt: '10こケースと ばら部品。ぜんぶで いくつ？',
+        prompt: '10の まとまりと、ばら。ぜんぶで いくつ？',
         correct: n,
         min: 10,
         max: 20,
@@ -626,7 +748,7 @@
       return numericQuestion({
         canonicalSkillId: ADDITION_STAGES[6].canonicalSkillId,
         kind: round % 2 ? 'slider' : 'choice',
-        prompt: 'クレーンAの' + values[0] + 'こと、Bの' + values[1] + 'こを 積み合わせよう。',
+        prompt: values[0] + 'こと ' + values[1] + 'こ。あわせると いくつ？',
         correct: values[2],
         min: 10,
         max: 20,
@@ -650,7 +772,7 @@
       return numericQuestion({
         canonicalSkillId: ADDITION_STAGES[7].canonicalSkillId,
         kind: round % 2 ? 'route' : 'slider',
-        prompt: '三本の投入口から ' + a + 'こ、' + b + 'こ、' + c + 'こ。ぜんぶは？',
+        prompt: a + 'こ、' + b + 'こ、' + c + 'こ。ぜんぶで いくつ？',
         correct,
         min: 0,
         max: 20,
@@ -665,12 +787,12 @@
       const source = buildAdditionQuestion(round % 4 + 1, round + 5, rng);
       const correct = source.math && source.math.result != null ? source.math.result : source.correct;
       const options = numberChoices(Number(correct), 0, 20, 3, rng).map(function (value) {
-        return { value, label: '回路 ' + value };
+        return { value, label: 'こたえ ' + value };
       });
       return finalizeQuestion({
         canonicalSkillId: ADDITION_STAGES[8].canonicalSkillId,
         kind: 'route',
-        prompt: '正しい答えの 回路を つなごう。',
+        prompt: 'しきに 合う こたえは どれ？',
         correct,
         options,
         visual: { type: 'circuit', equation: source.prompt, paths: options.map(optionValue) },
@@ -723,10 +845,9 @@
   function subtractionStory(max, borrow, rng) {
     const values = subtractionValues(max, borrow, rng);
     const scenes = [
-      ['ボルト', '部品ケース'],
-      ['ライト', '点検トレイ'],
-      ['ギア', '整理棚'],
-      ['バッテリー', '充電台']
+      ['おはじき', 'はこ'],
+      ['どんぐり', 'ふくろ'],
+      ['つみき', 'はこ']
     ];
     const scene = pick(scenes, rng);
     return numericQuestion({
@@ -737,7 +858,7 @@
       min: 0,
       max,
       story: true,
-      visual: { type: 'story', icons: ['🔩'], counts: [values[0], values[1]], operation: '-' },
+      visual: { type: 'story', icons: ['count-dot'], counts: [values[0], values[1]], operation: '-' },
       hint: 'はじめの数から、取り出した数を へらそう。',
       explain: values[0] + '−' + values[1] + '＝' + values[2] + '。のこりは' + values[2] + 'こ。',
       math: { kind: 'subtract', a: values[0], b: values[1], result: values[2] }
@@ -773,10 +894,10 @@
       return selectorQuestion(values[1], values[0], {
         canonicalSkillId: SUBTRACTION_STAGES[1].canonicalSkillId,
         kind: 'remove',
-        prompt: values[0] + 'この部品から ' + values[1] + 'こ 取り出そう。',
-        instruction: '取り出す部品をタップして「けってい」',
+        prompt: values[0] + 'この まるから ' + values[1] + 'こ とろう。',
+        instruction: 'とる まるを ' + values[1] + 'こ タップして「けってい」',
         visual: { type: 'remove', total: values[0], remove: values[1] },
-        hint: '取り出した部品を 一つずつ 数えよう。',
+        hint: 'タップした まるを 一つずつ 数えよう。',
         explain: values[0] + '−' + values[1] + '＝' + values[2] + '。のこりは' + values[2] + 'こ。',
         math: { kind: 'subtract', a: values[0], b: values[1], result: values[2] }
       }, rng);
@@ -788,7 +909,7 @@
       return finalizeQuestion({
         canonicalSkillId: SUBTRACTION_STAGES[2].canonicalSkillId,
         kind: 'choice',
-        prompt: b === 0 ? '部品を 何も取り出さない。のこりは？' : '部品を ぜんぶ取り出す。のこりは？',
+        prompt: b === 0 ? 'まるを 一つも とらない。のこりは？' : 'まるを ぜんぶ とる。のこりは？',
         correct,
         options: numberChoices(correct, 0, 10, 4, rng),
         visual: { type: 'switch', total: a, mode: b === 0 ? 'none' : 'all' },
@@ -802,7 +923,7 @@
       return numericQuestion({
         canonicalSkillId: SUBTRACTION_STAGES[3].canonicalSkillId,
         kind: round % 2 ? 'route' : 'slider',
-        prompt: values[0] + '−' + values[1] + 'の ギアを 合わせよう。',
+        prompt: values[0] + '−' + values[1] + 'は いくつ？',
         correct: values[2],
         min: 0,
         max: 10,
@@ -822,13 +943,13 @@
       return numericQuestion({
         canonicalSkillId: SUBTRACTION_STAGES[5].canonicalSkillId,
         kind: round % 2 ? 'remove' : 'slider',
-        prompt: values[0] + 'この部品から ' + values[1] + 'こ 整理しよう。',
+        prompt: values[0] + 'この まるから ' + values[1] + 'こ とろう。',
         correct: round % 2 ? values[1] : values[2],
         min: 0,
         max: 20,
         start: values[0],
         visual: { type: 'ten-bundle-remove', a: values[0], b: values[1] },
-        hint: '10ケースは そのまま。ばら部品を へらそう。',
+        hint: '10の まとまりは そのまま。ばらを へらそう。',
         explain: values[0] + '−' + values[1] + '＝' + values[2] + '。',
         math: { kind: 'subtract', a: values[0], b: values[1], result: values[2], mode: 'no-borrow-20' }
       }, rng);
@@ -851,7 +972,7 @@
       return numericQuestion({
         canonicalSkillId: SUBTRACTION_STAGES[6].canonicalSkillId,
         kind: 'route',
-        prompt: a + ops[0] + b + ops[1] + c + '。左から 配線しよう。',
+        prompt: a + ops[0] + b + ops[1] + c + '。ひだりから けいさんしよう。',
         correct,
         min: 0,
         max: 20,
@@ -866,18 +987,20 @@
       const values = subtractionValues(20, true, rng);
       const ones = values[0] % 10;
       const strategy = round % 2 ? 'make-ten' : 'ten-first';
-      const firstMove = strategy === 'make-ten' ? ones : values[1];
+      const firstMove = strategy === 'make-ten' ? ones : 10 - values[1];
       return numericQuestion({
         canonicalSkillId: SUBTRACTION_STAGES[7].canonicalSkillId,
         kind: round % 2 ? 'tap' : 'route',
-        prompt: values[0] + '−' + values[1] + '。10の駅へ行く最初の動きは？',
+        prompt: strategy === 'make-ten'
+          ? values[0] + 'から、まず いくつ ひくと 10？'
+          : '10−' + values[1] + 'は いくつ？',
         correct: firstMove,
         min: 0,
         max: 10,
         start: 0,
         visual: { type: 'break-ten', a: values[0], b: values[1], strategy, result: values[2] },
-        hint: strategy === 'make-ten' ? values[0] + 'から' + ones + 'を引くと10だよ。' : '10から' + values[1] + 'を引く方法だよ。',
-        explain: strategy === 'make-ten' ? values[1] + 'を' + ones + 'と' + (values[1] - ones) + 'に分けると答えは' + values[2] + '。' : '10−' + values[1] + 'と、残していた' + ones + 'を合わせると' + values[2] + '。',
+        hint: strategy === 'make-ten' ? values[0] + 'から' + ones + 'を ひくと 10だよ。' : '10から' + values[1] + 'を ひこう。',
+        explain: strategy === 'make-ten' ? values[1] + 'を' + ones + 'と' + (values[1] - ones) + 'に わけると、こたえは' + values[2] + '。' : '10−' + values[1] + '＝' + firstMove + '。のこしていた' + ones + 'を あわせると' + values[2] + '。',
         math: { kind: 'subtract', a: values[0], b: values[1], result: values[2], mode: 'borrow', strategy }
       }, rng);
     }
@@ -929,7 +1052,7 @@
       return numericQuestion({
         canonicalSkillId: SUBTRACTION_STAGES[9].canonicalSkillId,
         kind: 'slider',
-        prompt: a + 'から 一の部品を' + b + 'こ 取り出そう。',
+        prompt: a + 'から、ばらを ' + b + 'こ ひこう。',
         correct,
         min: 0,
         max: 100,
@@ -1018,7 +1141,7 @@
       return numericQuestion({
         canonicalSkillId: MEASURE_STAGES[2].canonicalSkillId,
         kind: variant === 1 ? 'choice' : 'slider',
-        prompt: variant === 1 ? 'ぼうの下に ならんだブロックは、いくつ分？' : 'ぼうと同じ長さになるよう、ブロック数カウンターを合わせよう。',
+        prompt: variant === 1 ? 'ぼうの下に ならんだブロックは、いくつ分？' : 'ぼうの ながさは、ブロック いくつ分？',
         instruction: variant === 1 ? 'ブロックを ひだりから数えて、数をえらぼう' : '−と＋で ブロックの数を合わせて「けってい」',
         correct: units,
         min: 0,
@@ -1033,27 +1156,42 @@
     }
     if (stageIndex === 3) {
       const cases = [
-        { id: 'direct', icon: '↔', title: 'うごかせる 二本のぼう', detail: 'どちらが ながいか しらべたい。', prompt: '二本のぼうは うごかせます。どうやって ながさを くらべる？' },
-        { id: 'transfer', icon: '〰', title: 'うごかせない 二つのつくえ', detail: 'はなれたまま、どちらが ながいか しらべたい。', prompt: '二つのつくえは うごかせません。どうやって ながさを くらべる？' },
-        { id: 'unit', icon: '▥', title: 'はなれた人へ つたえる', detail: '見えない人にも、ぼうの ながさを つたえたい。', prompt: 'はなれた人に ぼうの ながさを つたえるには、どうする？' }
+        { id: 'direct', icon: '↔', title: '2ほんの えんぴつ', detail: 'どちらが ながいか、そのばで しらべたい。', prompt: '2ほんの えんぴつ。どうやって ながさを くらべる？' },
+        { id: 'direct', icon: '↔', title: '2ほんの リボン', detail: 'どちらが みじかいか、そのばで しらべたい。', prompt: '2ほんの リボン。どうやって ながさを くらべる？' },
+        { id: 'direct', icon: '↔', title: '2ほんの ぼう', detail: 'どちらも うごかすことが できる。', prompt: 'うごかせる 2ほんの ぼう。どうやって くらべる？' },
+        { id: 'direct', icon: '↔', title: '2ほんの ストロー', detail: 'どちらも てに もって うごかせる。', prompt: '2ほんの ストロー。どうやって ながさを くらべる？' },
+        { id: 'direct', icon: '↔', title: '2ほんの はし', detail: 'そのばに ならべることが できる。', prompt: '2ほんの はし。どうやって ながさを くらべる？' },
+        { id: 'direct', icon: '↔', title: '2まいの テープ', detail: 'どちらも はがして ならべられる。', prompt: '2まいの テープ。どうやって ながさを くらべる？' },
+        { id: 'transfer', icon: '〰', title: '2つの つくえ', detail: 'はなれていて、うごかすことが できない。', prompt: 'うごかせない 2つの つくえ。どうやって ながさを くらべる？' },
+        { id: 'transfer', icon: '〰', title: '2つの まど', detail: 'はなれた ばしょに ついている。', prompt: 'はなれた 2つの まど。どうやって よこの ながさを くらべる？' },
+        { id: 'transfer', icon: '〰', title: 'ドアと たな', detail: 'そのばから うごかすことが できない。', prompt: 'うごかせない ドアと たな。どうやって ながさを くらべる？' },
+        { id: 'transfer', icon: '〰', title: '2つの ほんだな', detail: 'べつの へやに あって、うごかせない。', prompt: 'べつの へやの ほんだな。どうやって ながさを くらべる？' },
+        { id: 'transfer', icon: '〰', title: '2つの ドア', detail: 'かべに ついていて、ならべられない。', prompt: 'はなれた 2つの ドア。どうやって よこの ながさを くらべる？' },
+        { id: 'transfer', icon: '〰', title: 'ベッドと つくえ', detail: 'おおきくて、そのばから うごかせない。', prompt: 'うごかせない ベッドと つくえ。どうやって くらべる？' },
+        { id: 'unit', icon: '▥', title: 'ながさを つたえる', detail: 'ここに いない ひとへ、ぼうの ながさを つたえたい。', prompt: 'ぼうの ながさを、はなれた ひとへ つたえるには どうする？' },
+        { id: 'unit', icon: '▥', title: 'ながさを きろくする', detail: 'あとで もういちど、おなじ ながさを つくりたい。', prompt: 'ぼうの ながさを、あとで わかるように するには どうする？' },
+        { id: 'unit', icon: '▥', title: 'みんなで くらべる', detail: 'おなじ ブロックを つかって、ながさを つたえあう。', prompt: 'ブロックを つかって ながさを つたえるには、どうする？' },
+        { id: 'unit', icon: '▥', title: 'リボンを きろくする', detail: 'あしたも おなじ ながさに きりたい。', prompt: 'リボンの ながさを、あしたも わかるように するには どうする？' },
+        { id: 'unit', icon: '▥', title: 'いたの ながさを つたえる', detail: 'おなじ ブロックを つかって、かずで つたえたい。', prompt: 'いたの ながさを かずで つたえるには、どうする？' },
+        { id: 'unit', icon: '▥', title: 'おなじ ながさを つくる', detail: 'べつの ばしょで、おなじ ながさを つくりたい。', prompt: 'べつの ばしょで おなじ ながさを つくるには、どうする？' }
       ];
       const item = pick(cases, rng);
       const methods = [
         { value: 'direct', icon: '↔', label: 'はしを そろえて ならべる' },
         { value: 'transfer', icon: '〰', label: 'テープに うつして くらべる' },
-        { value: 'unit', icon: '▥', label: '同じブロックで なんこ分か はかる' }
+        { value: 'unit', icon: '▥', label: 'おなじ ブロックで なんこぶんか はかる' }
       ];
       return finalizeQuestion({
         canonicalSkillId: MEASURE_STAGES[3].canonicalSkillId,
         kind: 'choice',
         prompt: item.prompt,
-        instruction: 'したの三つから、やりかたを 一つえらぼう',
+        instruction: 'したの 3つから、やりかたを ひとつ えらぼう',
         correct: item.id,
         options: methods,
         templateId: 'measure.method.' + item.id,
         interactionFamily: 'measure.method:choice',
         visual: { type: 'measure-method', sceneId: item.id, icon: item.icon, title: item.title, detail: item.detail },
-        hint: 'うごかせる？ うつしとる？ 数でつたえる？を 考えよう。',
+        hint: 'うごかせる？ うつしとる？ かずで つたえる？を かんがえよう。',
         explain: methods.find(function (method) { return method.value === item.id; }).label + 'と ぴったりだね。'
       }, rng);
     }
@@ -1093,6 +1231,32 @@
       const hour = rand(1, 12, rng);
       const minute = stageIndex === 7 ? 0 : stageIndex === 8 ? 30 : rand(0, 11, rng) * 5;
       const correct = hour + ':' + String(minute).padStart(2, '0');
+      const timeLabel = function (targetHour, targetMinute) {
+        return targetHour + 'じ' + (targetMinute ? targetMinute + 'ぷん' : '');
+      };
+      if (round % 2 === 0) {
+        const optionMap = new Map();
+        optionMap.set(correct, { value: correct, label: timeLabel(hour, minute) });
+        while (optionMap.size < 4) {
+          const otherHour = rand(1, 12, rng);
+          const otherMinute = stageIndex === 7 ? 0 : stageIndex === 8 ? 30 : rand(0, 11, rng) * 5;
+          const value = otherHour + ':' + String(otherMinute).padStart(2, '0');
+          optionMap.set(value, { value, label: timeLabel(otherHour, otherMinute) });
+        }
+        return finalizeQuestion({
+          canonicalSkillId: MEASURE_STAGES[stageIndex].canonicalSkillId,
+          kind: 'choice',
+          prompt: stageIndex === 7 ? 'とけいは なんじ？' : stageIndex === 8 ? 'とけいは なんじはん？' : 'とけいは なんじ なんぷん？',
+          instruction: 'みじかい はりと ながい はりを みて、えらぼう',
+          correct,
+          options: shuffle(Array.from(optionMap.values()), rng),
+          visual: { type: 'clock-read', value: correct, hour, minute },
+          hint: minute === 0 ? 'ながい はりは 12。みじかい はりを みよう。' : minute === 30 ? 'ながい はりは 6。みじかい はりを みよう。' : 'ながい はりは、1めもり 5ふんだよ。',
+          explain: timeLabel(hour, minute) + 'だね。',
+          templateId: 'measure.clock.read.' + stageIndex,
+          interactionFamily: 'measure.clock:read'
+        }, rng);
+      }
       let startHour = hour === 12 ? 1 : hour + 1;
       const startMinute = stageIndex === 9 ? (minute === 55 ? 0 : (minute + 5) % 60) : (minute === 0 ? 30 : 0);
       return finalizeQuestion({
@@ -1117,10 +1281,10 @@
     if (stageIndex === 0) {
       const solid = pick(SOLIDS, rng);
       const objects = {
-        'はこ': ['ティッシュの はこ', 'にもつの はこ'],
-        'さいころ': ['ゲームの さいころ', '四角い ブロック'],
-        'つつ': ['かん', '紙の つつ'],
-        'ボール': ['ボール', 'まるい ビー玉']
+        'はこ': ['ティッシュの はこ', 'にもつの はこ', 'おかしの はこ', 'けしゴム'],
+        'さいころ': ['ゲームの さいころ', 'しかくい ブロック', 'つみき', 'こおりの かたち'],
+        'つつ': ['かん', 'かみの つつ', 'テープの しん', 'まるい のり'],
+        'ボール': ['ボール', 'まるい ビーだま', 'オレンジ', 'けいとの たま']
       };
       const object = pick(objects[solid.name], rng);
       return finalizeQuestion({
@@ -1135,43 +1299,42 @@
       }, rng);
     }
     if (stageIndex === 1) {
-      const solid = pick(SOLIDS, rng);
+      const item = pick(SHAPE_ACTION_CASES, rng);
       return finalizeQuestion({
         canonicalSkillId: SHAPE_STAGES[1].canonicalSkillId,
         kind: 'choice',
-        prompt: solid.name + 'が とくいな動きは？',
-        correct: solid.feature,
-        options: ['ころがる', 'つめる', 'どちらもむずかしい'],
-        visual: { type: 'solid-action', solid: solid.icon, action: solid.feature },
-        hint: '平らな面と、まるい面を さがそう。',
-        explain: solid.name + 'は「' + solid.feature + '」ことができるよ。'
+        prompt: item.name + 'は、ころがる？ つめる？',
+        correct: item.correct,
+        options: ['ころがる', 'つめる', 'どちらも'],
+        visual: { type: 'solid-action', solid: item.icon, object: item.name, action: item.correct },
+        hint: 'たいらな めんと、まるい めんを みよう。',
+        explain: item.name + 'は「' + item.correct + '」だよ。'
       }, rng);
     }
     if (stageIndex === 2) {
-      const solid = pick(SOLIDS, rng);
-      const correct = solid.feature === 'ころがる' ? 'ころがる棚' : 'つめる棚';
+      const item = pick(SHAPE_ACTION_CASES, rng);
       return finalizeQuestion({
         canonicalSkillId: SHAPE_STAGES[2].canonicalSkillId,
         kind: 'sort',
-        prompt: solid.name + 'を どの棚へ 入れる？',
-        correct,
-        options: ['ころがる棚', 'つめる棚'],
-        visual: { type: 'sort', item: solid.icon, bins: ['ころがる棚', 'つめる棚'] },
-        hint: '机の上で 動かすところを 想像しよう。',
-        explain: solid.name + 'は' + correct + 'へ。'
+        prompt: item.name + 'は、どの なかま？',
+        correct: item.correct,
+        options: ['ころがる', 'つめる', 'どちらも'],
+        visual: { type: 'sort', item: item.icon, itemLabel: item.name, bins: ['ころがる', 'つめる', 'どちらも'] },
+        hint: 'ころがしたり、つんだりする ところを かんがえよう。',
+        explain: item.name + 'は「' + item.correct + '」なかまだよ。'
       }, rng);
     }
     if (stageIndex === 3) {
-      const solid = pick(SOLIDS, rng);
+      const item = pick(SHAPE_FACE_CASES, rng);
       return finalizeQuestion({
         canonicalSkillId: SHAPE_STAGES[3].canonicalSkillId,
         kind: 'choice',
-        prompt: solid.name + 'の 面を スタンプすると、どんな形？',
-        correct: solid.face,
+        prompt: item.name + 'を スタンプすると、どんな かたち？',
+        correct: item.face,
         options: ['まる', 'さんかく', 'しかく'],
-        visual: { type: 'stamp', solid: solid.icon, face: solid.face },
-        hint: '底や横の 平らなところを 見よう。',
-        explain: solid.name + 'から「' + solid.face + '」のスタンプが できるよ。'
+        visual: { type: 'stamp', solid: item.icon, object: item.name, face: item.face },
+        hint: 'スタンプする たいらな めんを みよう。',
+        explain: item.name + 'から「' + item.face + '」の スタンプが できるよ。'
       }, rng);
     }
     if (stageIndex === 4) {
@@ -1181,26 +1344,40 @@
     if (stageIndex === 5 || stageIndex === 8) {
       const patterns = [
         [0, 1, 3, 4],
-        [1, 3, 4, 5],
+        [1, 2, 4, 5],
         [0, 3, 4, 7],
         [2, 4, 6, 8],
-        [0, 1, 4, 7]
+        [0, 1, 4, 7],
+        [1, 3, 4, 5, 7],
+        [0, 2, 4, 6, 8],
+        [0, 3, 4, 5, 8],
+        [2, 3, 4, 5, 6],
+        [0, 4, 8],
+        [0, 1, 2],
+        [3, 4, 5],
+        [6, 7, 8],
+        [0, 4, 5, 8],
+        [2, 3, 4, 6],
+        [0, 2, 3, 5, 6, 8],
+        [1, 3, 5, 7],
+        [0, 1, 2, 4, 7]
       ];
       const target = pick(patterns, rng);
+      const dots = stageIndex === 8;
       return finalizeQuestion({
         canonicalSkillId: SHAPE_STAGES[stageIndex].canonicalSkillId,
         kind: 'select',
-        prompt: '見本と 同じマスを 点灯して、形を作ろう。',
-        instruction: 'マスをタップして「けってい」',
+        prompt: dots ? 'みほんと おなじ てんを えらんで、かたちを つくろう。' : 'みほんと おなじ マスを えらんで、かたちを つくろう。',
+        instruction: (dots ? 'てん' : 'マス') + 'を タップして「けってい」',
         correct: target.slice().sort(function (a, b) { return a - b; }).join(','),
         input: '',
-        visual: { type: 'grid-copy', size: 3, target },
-        hint: '上の見本を 一段ずつ 見くらべよう。',
-        explain: '同じ位置のマスを 点灯できたね。'
+        visual: { type: dots ? 'dot-copy' : 'grid-copy', size: 3, target },
+        hint: 'うえの みほんを、1だんずつ みくらべよう。',
+        explain: 'おなじ ばしょの ' + (dots ? 'てん' : 'マス') + 'を えらべたね。'
       }, rng);
     }
     if (stageIndex === 6) {
-      const pieces = rand(2, 5, rng);
+      const pieces = rand(2, 7, rng);
       const correct = pick(['そのまま', 'まわす', 'うらがえす'], rng);
       return finalizeQuestion({
         canonicalSkillId: SHAPE_STAGES[6].canonicalSkillId,
@@ -1215,40 +1392,55 @@
     }
     if (stageIndex === 7) {
       const shapeCases = [
-        { name: 'さんかく', sticks: 3 },
-        { name: 'しかく', sticks: 4 },
-        { name: 'しかく二つ', sticks: 7 },
-        { name: 'さんかく二つ', sticks: 5 }
+        { name: 'さんかく', diagram: '△', sticks: 3 },
+        { name: 'しかく', diagram: '□', sticks: 4 },
+        { name: 'ながい しかく', diagram: '▭', sticks: 4 },
+        { name: '2つの さんかく', diagram: '△　△', sticks: 6 },
+        { name: '2つの しかく', diagram: '□　□', sticks: 8 },
+        { name: 'さんかくと しかく', diagram: '△　□', sticks: 7 },
+        { name: 'おうちの かたち', diagram: '⌂', sticks: 6 },
+        { name: 'となりあう 2つの しかく', diagram: '□□', sticks: 7 },
+        { name: 'かどの かたち', diagram: '⌞', sticks: 2 },
+        { name: 'じゅうじの かたち', diagram: '＋', sticks: 2 },
+        { name: 'やじるしの かたち', diagram: '↑', sticks: 3 },
+        { name: 'コの かたち', diagram: '⊏', sticks: 3 },
+        { name: 'ひしがた', diagram: '◇', sticks: 4 },
+        { name: 'ジグザグの かたち', diagram: '／＼／＼', sticks: 4 },
+        { name: '5つの へんの かたち', diagram: '⬠', sticks: 5 },
+        { name: '6つの へんの かたち', diagram: '⬡', sticks: 6 }
       ];
       const item = pick(shapeCases, rng);
-      return selectorQuestion(item.sticks, 8, {
+      return selectorQuestion(item.sticks, 10, {
         canonicalSkillId: SHAPE_STAGES[7].canonicalSkillId,
-        prompt: item.name + 'を作る棒を ' + item.sticks + '本 点灯しよう。',
-        hint: '辺を 一本ずつ 数えよう。',
-        explain: item.name + 'には 棒が' + item.sticks + '本 ひつようだよ。',
-        visual: { type: 'sticks', target: item.name, total: 8 }
+        prompt: item.name + 'を つくる ぼうを ' + item.sticks + 'ほん えらぼう。',
+        instruction: 'ぼうを ' + item.sticks + 'ほん タップして「けってい」',
+        hint: 'へんを 1ほんずつ かぞえよう。',
+        explain: item.name + 'には ぼうが ' + item.sticks + 'ほん ひつようだよ。',
+        visual: { type: 'sticks', target: item.name, diagram: item.diagram, total: 10 }
       }, rng);
     }
     if (stageIndex === 9) {
-      const center = 4;
-      const moves = [
-        { label: '上', delta: -3 },
-        { label: '下', delta: 3 },
-        { label: '左', delta: -1 },
-        { label: '右', delta: 1 }
-      ];
+      const moves = [];
+      for (let start = 0; start < 9; start += 1) {
+        const row = Math.floor(start / 3);
+        const column = start % 3;
+        if (row > 0) moves.push({ start, label: 'うえ', delta: -3 });
+        if (row < 2) moves.push({ start, label: 'した', delta: 3 });
+        if (column > 0) moves.push({ start, label: 'ひだり', delta: -1 });
+        if (column < 2) moves.push({ start, label: 'みぎ', delta: 1 });
+      }
       const move = pick(moves, rng);
-      const correct = center + move.delta;
+      const correct = move.start + move.delta;
       return finalizeQuestion({
         canonicalSkillId: SHAPE_STAGES[9].canonicalSkillId,
         kind: 'select',
-        prompt: 'まんなかの部品を 一つ「' + move.label + '」へ コピーしよう。',
-        instruction: '置くマスをタップして「けってい」',
+        prompt: 'いろの ついた マスから「' + move.label + '」へ うごかそう。',
+        instruction: 'うごいた さきの マスを タップして「けってい」',
         correct: String(correct),
         input: '',
-        visual: { type: 'position-grid', size: 3, start: center, direction: move.label },
-        hint: '自分の手を 動かして、' + move.label + 'を たしかめよう。',
-        explain: 'まんなかから' + move.label + 'のマスへ 置けたね。'
+        visual: { type: 'position-grid', size: 3, start: move.start, direction: move.label },
+        hint: 'ゆびを ' + move.label + 'へ うごかしてみよう。',
+        explain: move.label + 'の マスを えらべたね。'
       }, rng);
     }
     const pool = [0, 1, 2, 3, 5, 6, 7, 8, 9];
@@ -1276,7 +1468,7 @@
     if (isAdd) {
       const values = additionValues(10, false, rng);
       return {
-        text: 'トレイに部品が' + values[0] + 'こ。あとから' + values[1] + 'こ届きました。',
+        text: 'はこに おはじきが' + values[0] + 'こ。あとから' + values[1] + 'こ いれました。',
         operation: 'たしざん',
         equation: values[0] + '＋' + values[1] + '＝' + values[2],
         answer: values[2],
@@ -1285,7 +1477,7 @@
     }
     const values = subtractionValues(10, false, rng);
     return {
-      text: 'トレイに部品が' + values[0] + 'こ。' + values[1] + 'こ使いました。',
+      text: 'はこに おはじきが' + values[0] + 'こ。' + values[1] + 'こ とりました。',
       operation: 'ひきざん',
       equation: values[0] + '−' + values[1] + '＝' + values[2],
       answer: values[2],
@@ -1296,27 +1488,41 @@
   function buildSolveQuestion(stageIndex, round, rng) {
     if (stageIndex === 0) {
       const cases = [
-        { item: '💡', correct: 'ひかる', options: ['ひかる', 'まわる', 'つなぐ'] },
-        { item: '⚙️', correct: 'まわる', options: ['ひかる', 'まわる', 'つなぐ'] },
-        { item: '🔧', correct: 'つなぐ', options: ['ひかる', 'まわる', 'つなぐ'] },
-        { item: '●', correct: 'まるい', options: ['まるい', 'かくばった'] },
-        { item: '■', correct: 'かくばった', options: ['まるい', 'かくばった'] }
+        { item: 'りんご', correct: 'たべもの', options: ['たべもの', 'どうぶつ', 'どうぐ'] },
+        { item: 'みかん', correct: 'たべもの', options: ['たべもの', 'どうぶつ', 'どうぐ'] },
+        { item: 'バナナ', correct: 'たべもの', options: ['たべもの', 'どうぶつ', 'どうぐ'] },
+        { item: 'パン', correct: 'たべもの', options: ['たべもの', 'どうぶつ', 'どうぐ'] },
+        { item: 'いちご', correct: 'たべもの', options: ['たべもの', 'どうぶつ', 'どうぐ'] },
+        { item: 'おにぎり', correct: 'たべもの', options: ['たべもの', 'どうぶつ', 'どうぐ'] },
+        { item: 'ねこ', correct: 'どうぶつ', options: ['たべもの', 'どうぶつ', 'どうぐ'] },
+        { item: 'いぬ', correct: 'どうぶつ', options: ['たべもの', 'どうぶつ', 'どうぐ'] },
+        { item: 'うさぎ', correct: 'どうぶつ', options: ['たべもの', 'どうぶつ', 'どうぐ'] },
+        { item: 'とり', correct: 'どうぶつ', options: ['たべもの', 'どうぶつ', 'どうぐ'] },
+        { item: 'さかな', correct: 'どうぶつ', options: ['たべもの', 'どうぶつ', 'どうぐ'] },
+        { item: 'ぞう', correct: 'どうぶつ', options: ['たべもの', 'どうぶつ', 'どうぐ'] },
+        { item: 'えんぴつ', correct: 'どうぐ', options: ['たべもの', 'どうぶつ', 'どうぐ'] },
+        { item: 'はさみ', correct: 'どうぐ', options: ['たべもの', 'どうぶつ', 'どうぐ'] },
+        { item: 'スプーン', correct: 'どうぐ', options: ['たべもの', 'どうぶつ', 'どうぐ'] },
+        { item: 'ものさし', correct: 'どうぐ', options: ['たべもの', 'どうぶつ', 'どうぐ'] },
+        { item: 'かさ', correct: 'どうぐ', options: ['たべもの', 'どうぶつ', 'どうぐ'] },
+        { item: 'ブラシ', correct: 'どうぐ', options: ['たべもの', 'どうぶつ', 'どうぐ'] }
       ];
       const item = pick(cases, rng);
       return finalizeQuestion({
         canonicalSkillId: SOLVE_STAGES[0].canonicalSkillId,
         kind: 'sort',
-        prompt: item.item + 'を「' + item.correct + '」で 仕分けよう。',
+        prompt: '「' + item.item + '」は どの なかま？',
+        instruction: 'なかまを 一つ えらぼう',
         correct: item.correct,
         options: item.options,
         visual: { type: 'sort', item: item.item, bins: item.options },
-        hint: 'いま決めた 観点だけを 見よう。',
+        hint: item.item + 'が どんなものか 考えよう。',
         explain: item.item + 'は「' + item.correct + '」の仲間だね。'
       }, rng);
     }
     if (stageIndex === 1) {
       const counts = dataCounts(rng, false);
-      const labels = ['ライト', 'ギア', 'ボルト'];
+      const labels = ['りんご', 'みかん', 'ぶどう'];
       const max = Math.max.apply(null, counts);
       const index = counts.indexOf(max);
       return finalizeQuestion({
@@ -1332,17 +1538,18 @@
     }
     if (stageIndex === 2) {
       const target = rand(2, 8, rng);
+      const label = pick(['りんご', 'みかん', 'ぶどう'], rng);
       return selectorQuestion(target, 8, {
         canonicalSkillId: SOLVE_STAGES[2].canonicalSkillId,
-        prompt: '「ギア ' + target + 'こ」の 絵グラフを作ろう。',
-        hint: '一つの絵が 一つ分だよ。',
-        explain: 'ギアの絵を' + target + 'こ 点灯できたね。',
-        visual: { type: 'graph-build', label: 'ギア', total: 8 }
+        prompt: '「' + label + ' ' + target + 'こ」の えグラフを つくろう。',
+        hint: 'ひとつの しるしが、ひとつぶんだよ。',
+        explain: label + 'の しるしを ' + target + 'こ ならべられたね。',
+        visual: { type: 'graph-build', label, total: 8 }
       }, rng);
     }
     if (stageIndex === 3) {
       const counts = dataCounts(rng, false);
-      const labels = ['ライト', 'ギア', 'ボルト'];
+      const labels = ['りんご', 'みかん', 'ぶどう'];
       if (round % 3 === 2) {
         const max = Math.max.apply(null, counts);
         const min = Math.min.apply(null, counts);
@@ -1383,7 +1590,7 @@
         return finalizeQuestion({
           canonicalSkillId: SOLVE_STAGES[5].canonicalSkillId,
           kind: 'choice',
-          prompt: story.text + ' どちらのギアを使う？',
+          prompt: story.text + ' たしざん？ ひきざん？',
           correct: story.operation,
           options: ['たしざん', 'ひきざん'],
           story: true,
@@ -1414,7 +1621,7 @@
         return numericQuestion({
           canonicalSkillId: SOLVE_STAGES[7].canonicalSkillId,
           kind: 'slider',
-          prompt: story.text + ' 「？」に入る答えを 関係図へ置こう。',
+          prompt: story.text + ' こたえは いくつ？',
           correct: story.answer,
           min: 0,
           max: 20,
@@ -1429,7 +1636,7 @@
       return finalizeQuestion({
         canonicalSkillId: SOLVE_STAGES[8].canonicalSkillId,
         kind: 'route',
-        prompt: 'このお話につながる 式の回路は？ ' + story.text,
+        prompt: 'この おはなしに 合う しきは？ ' + story.text,
         correct: expression,
         options: [expression, story.math.a + (story.operation === 'たしざん' ? '−' : '＋') + story.math.b, String(story.answer)],
         story: true,
@@ -1446,9 +1653,9 @@
       if (round % 2 === 0) {
         return selectorQuestion(perGroup, total, {
           canonicalSkillId: SOLVE_STAGES[9].canonicalSkillId,
-          prompt: total + 'この部品を ' + groups + '台へ 同じ数ずつ配る。1台分を選ぼう。',
-          hint: '一台ずつ、順番に一つずつ 配るつもりで考えよう。',
-          explain: '一台に' + perGroup + 'こずつ 配れるよ。',
+          prompt: total + 'この おはじきを ' + groups + '人で おなじ数ずつ わける。一人ぶんは？',
+          hint: 'ひとりずつ、じゅんばんに ひとつずつ くばってみよう。',
+          explain: 'ひとりに ' + perGroup + 'こずつ くばれるよ。',
           story: true,
           visual: { type: 'equal-groups', groups, total, perGroup }
         }, rng);
@@ -1490,6 +1697,7 @@
     question.stageId = line.stages[safeIndex].id;
     question.stageIndex = safeIndex;
     question.signature = questionSignature(question);
+    question.contentSignature = questionContentSignature(question);
     return question;
   }
 
@@ -1500,6 +1708,7 @@
     const count = config.count || STAGE_ROUNDS;
     const recent = new Set(config.exclude || []);
     const used = new Set();
+    const usedContent = new Set();
     const questions = [];
     for (let round = 0; round < count; round += 1) {
       let question;
@@ -1508,11 +1717,13 @@
       do {
         question = buildQuestion(lineId, stageIndex, round + guard, { rng });
         guard += 1;
-      } while ((used.has(question.signature) || recent.has(question.signature) || (question.templateId && question.templateId === previousTemplate)) && guard < 80);
+      } while ((used.has(question.signature) || usedContent.has(question.contentSignature) || recent.has(question.signature) || recent.has(question.contentSignature) ||
+        (question.templateId && question.templateId === previousTemplate)) && guard < 160);
       if (used.has(question.signature)) {
         question.signature = question.signature + '-' + round + '-' + hashString(seed + ':' + guard);
       }
       used.add(question.signature);
+      usedContent.add(question.contentSignature);
       questions.push(question);
     }
     return { seed, questions };
@@ -1553,8 +1764,9 @@
       do {
         question = buildQuestion(lineId, stageIndex, round + guard + 17, { rng });
         guard += 1;
-      } while ((used.has(question.signature) || (previous && question.templateId && question.templateId === previous.templateId)) && guard < 80);
+      } while ((used.has(question.signature) || used.has(question.contentSignature) || (previous && question.templateId && question.templateId === previous.templateId)) && guard < 80);
       used.add(question.signature);
+      used.add(question.contentSignature);
       question.rush = true;
       question.checkpoint = false;
       question.showHint = false;
@@ -1589,7 +1801,7 @@
       progress: {},
       parts: {},
       moods: {},
-      settings: { sound: true, bgm: true, bgmVolume: 0.35, motion: true },
+      settings: { sound: true, bgm: true, bgmVolume: 0.7, motion: true, adminUnlockG1: false, audioMixVersion: 2 },
       stats: emptyStats(),
       lineStats,
       islandStats: lineStats,
@@ -1630,7 +1842,10 @@
     base.settings = Object.assign({}, base.settings, savedSettings);
     if (!Object.prototype.hasOwnProperty.call(savedSettings, 'bgm')) base.settings.bgm = savedSettings.sound !== false;
     const bgmVolume = Number(base.settings.bgmVolume);
-    base.settings.bgmVolume = Number.isFinite(bgmVolume) ? Math.max(0, Math.min(1, bgmVolume)) : 0.35;
+    base.settings.bgmVolume = Number.isFinite(bgmVolume) ? Math.max(0, Math.min(1, bgmVolume)) : 0.7;
+    if (Number(saved.settings && saved.settings.audioMixVersion || 0) < 2 && base.settings.bgm && base.settings.bgmVolume > 0 && base.settings.bgmVolume <= 0.35) base.settings.bgmVolume = 0.7;
+    base.settings.audioMixVersion = 2;
+    base.settings.adminUnlockG1 = Boolean(base.settings.adminUnlockG1);
     base.stats = mergeStats(base.stats, saved.stats);
     const sourceLineStats = saved.lineStats || saved.islandStats || {};
     if (Number(saved.version || 1) === 1 && saved.stats) sourceLineStats.addition = mergeStats(emptyStats(), saved.stats);
@@ -1720,6 +1935,7 @@
     answerEquals,
     numberChoices,
     questionSignature,
+    questionContentSignature,
     buildQuestion,
     makeStageQuestions,
     makeTimeAttackQuestions,

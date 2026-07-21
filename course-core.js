@@ -105,10 +105,13 @@
 
   function mergeSettings(saved) {
     const source = saved && typeof saved === 'object' ? saved : {};
-    const result = Object.assign({ sound: true, bgm: true, bgmVolume: 0.35, motion: true }, source);
+    const result = Object.assign({ sound: true, bgm: true, bgmVolume: 0.7, motion: true, adminUnlockG1: false, audioMixVersion: 2 }, source);
     if (!Object.prototype.hasOwnProperty.call(source, 'bgm')) result.bgm = source.sound !== false;
     const volume = Number(result.bgmVolume);
-    result.bgmVolume = Number.isFinite(volume) ? Math.max(0, Math.min(1, volume)) : 0.35;
+    result.bgmVolume = Number.isFinite(volume) ? Math.max(0, Math.min(1, volume)) : 0.7;
+    if (Number(source.audioMixVersion || 0) < 2 && result.bgm && result.bgmVolume > 0 && result.bgmVolume <= 0.35) result.bgmVolume = 0.7;
+    result.audioMixVersion = 2;
+    result.adminUnlockG1 = Boolean(result.adminUnlockG1);
     return result;
   }
 

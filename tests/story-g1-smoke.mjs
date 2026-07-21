@@ -61,7 +61,7 @@ assert(indexHtml.indexOf('story-core.js') < indexHtml.indexOf('app.js'), 'story-
 assert(indexHtml.indexOf('audio-core.js') < indexHtml.indexOf('app.js'), 'audio-core.js はapp.jsより先に読み込む必要があります');
 assert(sw.includes('./story-core.js'), 'Service Workerにstory-core.jsがありません');
 assert(sw.includes('./audio-core.js'), 'Service Workerにaudio-core.jsがありません');
-assert(sw.includes('hirameki-kobo-v8'), 'ビジュアル改善版のキャッシュ世代が不正です');
+assert(sw.includes('hirameki-kobo-v9'), '一年生UX修正版のキャッシュ世代が不正です');
 
 function createAppHarness(options = {}) {
   const appElement = { innerHTML: '' };
@@ -169,7 +169,7 @@ function clearCurrentStage(harness) {
 
 const fresh = createAppHarness();
 assert.equal(fresh.app.getUi().openingStep, 0, '新規利用者に全体導入が出ません');
-assert(fresh.appElement.innerHTML.includes('ルミナが とまった'), 'ルミナ停止の目的が伝わりません');
+assert(fresh.appElement.innerHTML.includes('ルミナが ねむっている'), 'ルミナの目的が伝わりません');
 finishOpening(fresh);
 assert.equal(fresh.app.getRootState().settings.storyRevision, story.STORY_VERSION, '全体導入の改訂番号が保存されません');
 assert.equal(fresh.app.getUi().screen, 'courses', '全体導入後に修理区画を選べません');
@@ -195,7 +195,7 @@ courseState.settings.storyRevision = story.STORY_VERSION;
 const courseHarness = createAppHarness({ savedRaw: courseState });
 courseHarness.dispatchAction('choose-course', { course: 'g1' });
 assert.equal(courseHarness.app.getUi().courseIntroStep, 0, 'G1初回の章導入が始まりません');
-assert(courseHarness.appElement.innerHTML.includes('きそひかりのみち'), 'G1の章目的が一年生向けの読み方で表示されません');
+assert(courseHarness.appElement.innerHTML.includes('1ねんせいの さんすうへ'), 'G1の章目的が一年生向けの言葉で表示されません');
 finishCourseIntro(courseHarness);
 assert(courseHarness.app.getState().storySeen[story.storyKey('course', 'g1', 'main')], 'G1章導入の既読が保存されません');
 courseHarness.dispatchAction('choose-course', { course: 'g2' });
@@ -226,7 +226,8 @@ unseen.dispatchAction('line-intro-next');
 unseen.dispatchAction('finish-line-intro');
 assert.equal(unseen.app.getUi().lineIntroStep, null, 'ライン導入を閉じられません');
 assert.equal(unseen.app.getUi().stageIntro, numberStage.id, 'ライン導入後にステージ導入へ続きません');
-assert(unseen.appElement.innerHTML.includes(story.childCopy('g1', numberStage.part)), 'ステージ固有パーツがモクモの診断にありません');
+assert(unseen.appElement.innerHTML.includes('この ステージで やること'), 'ステージ開始前に学習内容が表示されません');
+assert(unseen.appElement.innerHTML.includes(numberStage.action), 'ステージ開始前の説明と実際の学習内容が一致しません');
 unseen.dispatchAction('begin-stage');
 assert(unseen.app.getState().storySeen[story.storyKey('line', 'g1', 'number')], 'ライン導入の既読が保存されません');
 assert(unseen.app.getState().storySeen[story.storyKey('stage', 'g1', numberStage.id)], 'ステージ導入の既読が保存されません');
@@ -246,9 +247,9 @@ lineHarness.app.startStage(10, 'number');
 lineHarness.dispatchAction('begin-stage');
 clearCurrentStage(lineHarness);
 assert.equal(lineHarness.app.getUi().result.firstLineComplete, true, '11個目の初回クリアでライン完成になりません');
-assert(lineHarness.appElement.innerHTML.includes('かずコア かんせい'), 'ライン完成の専用物語が表示されません');
-assert(lineHarness.appElement.innerHTML.includes('高速点検'), 'タイムアタックが修理後の点検として説明されません');
-assert(lineHarness.appElement.innerHTML.includes(story.childCopy('g1', story.lineStory('g1', 'number').zoneEffects[2])), '第3作業区画の世界変化が表示されません');
+assert(lineHarness.appElement.innerHTML.includes('かずを ぜんぶ クリア'), 'ライン完成が一年生向けの言葉で表示されません');
+assert(lineHarness.appElement.innerHTML.includes('タイムアタック'), 'ライン完成後のタイムアタックが説明されません');
+assert(lineHarness.appElement.innerHTML.includes('ルミナが もっと げんき'), 'ライン完成が物語の目的につながりません');
 lineHarness.app.startStage(10, 'number');
 clearCurrentStage(lineHarness);
 assert.equal(lineHarness.app.getUi().result.firstLineComplete, false, '完走ライン再プレイで完成イベントが繰り返されました');
@@ -263,7 +264,7 @@ for (let stageIndex = 0; stageIndex <= 7; stageIndex += 1) {
   clearCurrentStage(zoneHarness);
   if (stageIndex === 3 || stageIndex === 7) {
     const effectIndex = stageIndex === 3 ? 0 : 1;
-    assert(zoneHarness.appElement.innerHTML.includes(story.childCopy('g1', story.lineStory('g1', 'number').zoneEffects[effectIndex])), '第' + (effectIndex + 1) + '作業区画の世界変化が表示されません');
+    assert(zoneHarness.appElement.innerHTML.includes('ここまで できた'), '第' + (effectIndex + 1) + '区切りの達成が表示されません');
   }
 }
 
@@ -281,12 +282,12 @@ finaleHarness.app.startStage(10, 'solve');
 finaleHarness.dispatchAction('begin-stage');
 clearCurrentStage(finaleHarness);
 assert.equal(finaleHarness.app.getUi().result.firstCourseComplete, true, '66個目の初回クリアで区画完成になりません');
-assert(finaleHarness.appElement.innerHTML.includes('六つのコアがそろった'), 'G1完走の結末導線が表示されません');
+assert(finaleHarness.appElement.innerHTML.includes('1ねんせいを ぜんぶ クリア'), 'G1完走の結末導線が表示されません');
 const interruptedFinale = createAppHarness({ storage: finaleHarness.storage, seedStart: 815000 });
 assert.equal(interruptedFinale.app.getUi().courseFinaleStep, 0, '完走直後に再読込すると未読の結末が失われます');
 finaleHarness.dispatchAction('show-course-finale');
 assert.equal(finaleHarness.app.getUi().courseFinaleStep, 0, 'G1完走シーンを開始できません');
-assert(finaleHarness.appElement.innerHTML.includes('六つのコアが つながった'), 'G1完走シーンの内容が表示されません');
+assert(finaleHarness.appElement.innerHTML.includes('ルミナが げんきに なった'), 'G1完走シーンの内容が表示されません');
 finaleHarness.dispatchAction('course-finale-next');
 finaleHarness.dispatchAction('finish-course-finale');
 assert(finaleHarness.app.getState().storySeen[story.storyKey('course-complete', 'g1', 'main')], 'G1完走シーンの既読が保存されません');

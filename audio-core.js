@@ -1,21 +1,21 @@
 (function (global) {
   'use strict';
 
-  const DEFAULT_BGM_VOLUME = 0.35;
-  const MAX_BGM_GAIN = 0.1;
-  const TEMPO = 80;
+  const DEFAULT_BGM_VOLUME = 0.7;
+  const MAX_BGM_GAIN = 0.3;
+  const TEMPO = 96;
   const STEP_SECONDS = 60 / TEMPO;
   const LOOK_AHEAD_SECONDS = 0.35;
   const SCHEDULER_INTERVAL_MS = 100;
   const DUCK_RATIO = 0.4;
 
-  // A deliberately sparse C-major pentatonic phrase. Rests and the long loop
-  // keep it in the background while a child reads or thinks.
+  // A gentle C-major pentatonic loop. This is the app's actual music data:
+  // each number is an oscillator frequency in hertz and null is a short rest.
   const MELODY = Object.freeze([
-    329.63, null, 392.00, null, 440.00, null, 392.00, null,
-    293.66, null, 329.63, 392.00, null, null, 261.63, null,
-    329.63, null, 440.00, null, 523.25, null, 440.00, null,
-    392.00, null, 329.63, null, 293.66, null, 261.63, null
+    329.63, 392.00, 440.00, null, 392.00, 329.63, 293.66, null,
+    261.63, 293.66, 329.63, 392.00, 329.63, null, 293.66, null,
+    329.63, 440.00, 523.25, null, 440.00, 392.00, 329.63, null,
+    293.66, 329.63, 392.00, 440.00, 392.00, 329.63, 261.63, null
   ]);
   const BASS = Object.freeze([130.81, 110.00, 146.83, 98.00]);
   const TONES = Object.freeze({
@@ -194,9 +194,9 @@
       if (melodyFrequency) {
         scheduleVoice(melodyFrequency, when, STEP_SECONDS * 0.72, 0.34, 'triangle', musicInput, musicVoices);
       }
-      if (index % 8 === 0) {
-        const bassFrequency = BASS[Math.floor(index / 8) % BASS.length];
-        scheduleVoice(bassFrequency, when, STEP_SECONDS * 3.5, 0.16, 'sine', musicInput, musicVoices);
+      if (index % 4 === 0) {
+        const bassFrequency = BASS[Math.floor(index / 4) % BASS.length];
+        scheduleVoice(bassFrequency, when, STEP_SECONDS * 2.8, 0.18, 'sine', musicInput, musicVoices);
       }
     }
 
@@ -252,6 +252,8 @@
         master: config.master,
         bgm: config.bgm,
         bgmVolume: config.bgmVolume,
+        musicData: 'synth-loop-v2',
+        activeMusicVoices: musicVoices.size,
         mode: config.mode,
         visible: config.visible,
         destroyed: destroyed
@@ -339,6 +341,19 @@
       });
     }
 
+    function previewBgm() {
+      if (destroyed || !config.master || !config.bgm || !config.visible || config.bgmVolume <= 0) return Promise.resolve(false);
+      return unlock().then(function (ready) {
+        if (!ready || !musicInput || !musicGain) return false;
+        const now = Number(context.currentTime || 0) + 0.02;
+        setParam(musicGain.gain, musicLevel(), now, 0.02);
+        [523.25, 659.25, 783.99, 1046.50].forEach(function (frequency, index) {
+          scheduleVoice(frequency, now + index * 0.16, 0.34, 0.38, 'triangle', musicInput, musicVoices);
+        });
+        return true;
+      });
+    }
+
     function setVisible(visible) {
       if (destroyed) return Promise.resolve(false);
       config.visible = Boolean(visible);
@@ -393,6 +408,7 @@
       configure: configure,
       unlock: unlock,
       playTone: playTone,
+      previewBgm: previewBgm,
       setVisible: setVisible,
       destroy: destroy,
       snapshot: snapshot

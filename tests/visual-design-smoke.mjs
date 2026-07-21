@@ -25,7 +25,7 @@ for (const asset of assets) {
 }
 
 assert(html.includes('rel="preload" as="image" href="assets/workshop-hero-v1.jpg"'), 'ヒーロー画像を先読みしていません');
-assert(sw.includes('hirameki-kobo-v8'), 'ビジュアル改善版のキャッシュ世代が不正です');
+assert(sw.includes('hirameki-kobo-v9'), '一年生UX修正版のキャッシュ世代が不正です');
 
 assert(app.includes('VISUAL_TOKEN_META'), '絵文字から教材オブジェクトへ変換する層がありません');
 assert(app.includes('visualTokenHtml(icon)'), 'タップ部品が教材オブジェクトを使っていません');
@@ -46,8 +46,8 @@ assert(!/font-size:\s*0\s*;/.test(css), '狭幅ナビゲーションが文字ラ
 assert(/@media \(max-width: 500px\)[\s\S]*\.brand-button\s*\{\s*display:\s*none/.test(css), '狭幅で6個の文字メニューを同時表示する余白がありません');
 
 assert(app.includes('<small>やること</small><strong>'), '操作説明に「やること」ラベルがありません');
-assert(app.includes("choice: '一つ えらぶ'") && app.includes("tap: '部品を タップ'"), '操作種別を子ども向けに明示していません');
-assert(app.includes('どのトレイに 入るかな？'), '仕分けUIが答え方を説明していません');
+assert(app.includes("choice: '一つ えらぶ'") && app.includes("tap: 'まるを タップ'"), '一年生の操作種別を子ども向けに明示していません');
+assert(app.includes('どの なかまかな？'), 'なかま分けUIが答え方を説明していません');
 assert(app.includes('role="img" aria-label="'), '生成画像または教材図に代替説明がありません');
 
 console.log('visual design smoke: generated art / atlas crops / icon-independent semantics / explicit actions / mobile labels / offline assets OK');

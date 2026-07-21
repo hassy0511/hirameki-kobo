@@ -43,7 +43,7 @@ assert.deepEqual(
   '既存の引き算進捗IDが変わっています'
 );
 
-const knownKinds = new Set(['choice', 'sort', 'tap', 'remove', 'slider', 'route', 'order', 'clock', 'select', 'keypad']);
+const knownKinds = new Set(['choice', 'sort', 'tap', 'remove', 'slider', 'route', 'order', 'clock', 'select', 'keypad', 'input']);
 let generated = 0;
 const kindsByLine = {};
 const storyByLine = {};
@@ -215,9 +215,9 @@ function createAppHarness(savedRaw = null) {
 }
 
 const harness = createAppHarness();
-assert(harness.appElement.innerHTML.includes('6つのライン'), 'ホームに6ラインの説明がありません');
-assert(harness.appElement.innerHTML.includes('かず 基礎ライン'), 'かずラインがホームにありません');
-assert(harness.appElement.innerHTML.includes('しらべる 解決ライン'), '解決ラインがホームにありません');
+assert(harness.appElement.innerHTML.includes('6つの べんきょう'), 'ホームに6つの学習内容の説明がありません');
+assert(harness.appElement.innerHTML.includes('<h3>かず</h3>'), 'かずの学習がホームにありません');
+assert(harness.appElement.innerHTML.includes('おはなし・グラフ'), 'おはなし・グラフの学習がホームにありません');
 assert(harness.appElement.innerHTML.includes('全66ステージ') || harness.appElement.innerHTML.includes('66'), '全66ステージが表示されません');
 
 for (const lineId of core.LINE_ORDER) {
