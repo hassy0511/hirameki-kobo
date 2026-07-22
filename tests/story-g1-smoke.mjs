@@ -5,6 +5,7 @@ import vm from 'node:vm';
 const rootUrl = new URL('../', import.meta.url);
 const sourceFiles = [
   'game-core.js',
+  'grade1-runtime.js',
   'grade2-curriculum.js',
   'grade2-runtime-arithmetic.js',
   'grade2-runtime-world.js',
@@ -61,7 +62,7 @@ assert(indexHtml.indexOf('story-core.js') < indexHtml.indexOf('app.js'), 'story-
 assert(indexHtml.indexOf('audio-core.js') < indexHtml.indexOf('app.js'), 'audio-core.js はapp.jsより先に読み込む必要があります');
 assert(sw.includes('./story-core.js'), 'Service Workerにstory-core.jsがありません');
 assert(sw.includes('./audio-core.js'), 'Service Workerにaudio-core.jsがありません');
-assert(sw.includes('hirameki-kobo-v9'), '一年生UX修正版のキャッシュ世代が不正です');
+assert(sw.includes('hirameki-kobo-v11'), '一年生出題契約版のキャッシュ世代が不正です');
 
 function createAppHarness(options = {}) {
   const appElement = { innerHTML: '' };

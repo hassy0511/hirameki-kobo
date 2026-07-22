@@ -548,8 +548,9 @@
     state.recentQuestions[stage.id] = recent.concat(pack.questions.reduce(function (keys, question) {
       keys.push(question.signature);
       if (activeCourseId === 'g1' && question.contentSignature) keys.push(question.contentSignature);
+      if (activeCourseId === 'g1' && question.learningSignature) keys.push(question.learningSignature);
       return keys;
-    }, [])).slice(activeCourseId === 'g1' ? -16 : -32);
+    }, [])).slice(activeCourseId === 'g1' ? -96 : -32);
     session = {
       mode: 'standard',
       courseId: activeCourseId,
@@ -704,7 +705,7 @@
     if (visual.type === 'unit-length') total = visual.count;
     total = Math.max(Number(question.correct) || 0, Math.min(20, Number(total) || 10));
     const selected = new Set(question.selected || []);
-    const targetGuide = visual.type === 'sticks' ? '<div class="stick-target"><small>つくる かたち</small><strong>' + childText(visual.diagram || visual.target) + '</strong><span>' + childText(visual.target) + '</span></div>' : '';
+    const targetGuide = visual.type === 'sticks' ? '<div class="stick-target stick-target--' + Number(visual.materialVariant || 0) + '"><small>つくる かたち</small><strong>' + childText(visual.diagram || visual.target) + '</strong><span>' + childText(visual.target) + '</span></div>' : '';
     return targetGuide + '<div class="selectable-grid" style="' + lineStyle(line) + '">' + repeat(total, function (index) {
       const icon = visual.icons && visual.icons.length ? visual.icons[index % visual.icons.length] : visual.type === 'sticks' ? '┃' : visual.type === 'graph-build' ? '✓' : activeCourseId === 'g1' ? 'count-dot' : '■';
       const label = tokenMeta(icon).label + ' ' + (index + 1);
@@ -747,13 +748,72 @@
       if (!interactive) return '<span class="unit-measure-block ' + (active ? 'selected' : 'ghost') + '"></span>';
       return '<button class="unit-measure-block ' + (active ? 'selected' : '') + '" data-piece="' + index + '" aria-label="ここまでで' + (index + 1) + 'こ分" aria-pressed="' + active + '"></button>';
     });
-    return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="unit-measure-board"><strong>この ぼうの ながさ</strong><div class="unit-target-grid" style="' + gridStyle + '"><span class="unit-target-bar" style="grid-column:1 / span ' + targetUnits + '"></span></div><strong>' + (interactive ? 'ブロックの 右はしを タップ' : 'ブロック1こ分ずつ かぞえる') + '</strong><div class="unit-measure-grid" style="' + gridStyle + '">' + blocks + '</div></div></div>';
+    return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="unit-measure-board unit-measure-board--' + Number(visual.layoutVariant || 0) + '"><strong>この ぼうの ながさ</strong><div class="unit-target-grid" style="' + gridStyle + '"><span class="unit-target-bar" style="grid-column:1 / span ' + targetUnits + '"></span></div><strong>' + (interactive ? 'ブロックの 右はしを タップ' : 'ブロック1こ分ずつ かぞえる') + '</strong><div class="unit-measure-grid" style="' + gridStyle + '">' + blocks + '</div></div></div>';
+  }
+
+  function bondBuilderHtml(question, line) {
+    const visual = question.visual || {};
+    const known = Math.max(0, Number(visual.known) || 0);
+    const target = Math.max(known, Number(visual.target) || known);
+    const missing = Math.max(0, target - known);
+    const selected = new Set(question.selected || []);
+    return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="bond-builder"><div><small>いま ある かず</small>' + tenFrame(known) + '</div><span class="operation-symbol">＋</span><div><small>たりない ぶん</small><div class="bond-empty-grid">' + repeat(missing, function (index) {
+      return '<button class="tap-piece bond-piece ' + (selected.has(index) ? 'selected' : '') + '" data-piece="' + index + '" aria-label="たりない まる ' + (index + 1) + '" aria-pressed="' + selected.has(index) + '">' + visualTokenHtml('count-dot') + '</button>';
+    }) + '</div></div><strong class="bond-target">あわせて ' + target + 'こ</strong></div></div>';
+  }
+
+  function makeTenBuilderHtml(question, line) {
+    const visual = question.visual || {};
+    const selected = new Set(question.selected || []);
+    const moved = selected.size;
+    const source = Math.max(0, Number(visual.b) || 0);
+    return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="make-ten-builder"><div><small>10に する ところ</small>' + tenFrame(Math.min(10, Number(visual.a || 0) + moved)) + '</div><span class="operation-symbol">←</span><div><small>ここから うごかす</small><div class="selectable-grid compact">' + repeat(source, function (index) {
+      return '<button class="tap-piece ' + (selected.has(index) ? 'selected' : '') + '" data-piece="' + index + '" aria-label="うごかす まる ' + (index + 1) + '" aria-pressed="' + selected.has(index) + '">' + visualTokenHtml('count-dot') + '</button>';
+    }) + '</div></div></div><p class="direction-guide">いま ' + (Number(visual.a || 0) + moved) + 'こ。10に なるように うごかそう。</p></div>';
+  }
+
+  function placeValueRemoveBuilderHtml(question, line) {
+    const visual = question.visual || {};
+    const selected = new Set(question.selected || []);
+    const tenMode = visual.unit === 'ten';
+    return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="place-remove-builder"><div class="place-remove-start"><small>はじめの かず</small><strong>' + Number(visual.number || 0) + '</strong></div><div><small>' + (tenMode ? '10の まとまり' : 'ばら') + 'を タップ</small><div class="place-remove-pieces">' + repeat(visual.total, function (index) {
+      return '<button class="place-remove-piece ' + (tenMode ? 'ten' : 'one') + ' ' + (selected.has(index) ? 'selected' : '') + '" data-piece="' + index + '" aria-label="' + (tenMode ? '10の まとまり ' : 'ばら ') + (index + 1) + '" aria-pressed="' + selected.has(index) + '"></button>';
+    }) + '</div></div></div></div>';
+  }
+
+  function numberLinePlayHtml(question, line) {
+    const min = Number(question.min || 0);
+    const max = Number(question.max == null ? 20 : question.max);
+    const current = Number(question.input === '' ? min : question.input);
+    const start = Number(question.initialInput == null ? current : question.initialInput);
+    const values = Array.from({ length: Math.max(1, max - min + 1) }, function (_, index) { return min + index; });
+    return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="play-number-line" role="img" aria-label="かずの せん。いま ' + current + '"><div class="play-number-line-track">' + values.map(function (value) {
+      return '<span class="play-number-stop ' + (value === current ? 'current' : '') + (value === start ? ' start' : '') + '"><i></i><b>' + value + '</b></span>';
+    }).join('') + '</div><div class="number-line-status"><span>はじめ：' + start + '</span><strong>いま：' + current + '</strong></div></div></div>';
+  }
+
+  function equalGroupsBuilderHtml(question, line) {
+    const visual = question.visual || {};
+    const amount = Math.max(1, Number(question.input || 1));
+    const share = visual.mode === 'share';
+    const boxCount = share ? Number(visual.groups) : amount;
+    const each = share ? amount : Number(visual.perGroup);
+    const used = boxCount * each;
+    const difference = Number(visual.total) - used;
+    return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="groups-builder"><div class="groups-pool"><small>ぜんぶ</small><strong>' + visual.total + 'こ</strong></div><div class="groups-preview">' + repeat(boxCount, function (index) {
+      return '<div class="group-box-preview"><small>' + (share ? (index + 1) + 'にんめ' : (index + 1) + 'こめ') + '</small>' + miniParts(each) + '</div>';
+    }) + '</div><p class="groups-balance ' + (difference === 0 ? 'balanced' : '') + '">' + (difference === 0 ? 'ぴったり おなじ！' : difference > 0 ? 'あと ' + difference + 'こ のこっているよ' : Math.abs(difference) + 'こ おおすぎるよ') + '</p></div></div>';
   }
 
   function visualHtml(question, line) {
     const visual = question.visual || {};
     if (visual.type === 'unit-length-builder') return unitLengthHtml(question, line, true);
     if (visual.type === 'unit-length-count') return unitLengthHtml(question, line, false);
+    if (visual.type === 'bond-builder') return bondBuilderHtml(question, line);
+    if (visual.type === 'make-ten-builder') return makeTenBuilderHtml(question, line);
+    if (visual.type === 'place-value-remove-builder') return placeValueRemoveBuilderHtml(question, line);
+    if (question.kind === 'numberline') return numberLinePlayHtml(question, line);
+    if (question.kind === 'grouping' || visual.type === 'equal-groups-builder') return equalGroupsBuilderHtml(question, line);
     if (question.kind === 'tap' || question.kind === 'remove') {
       return '<div class="visual-board" style="' + lineStyle(line) + '">' + interactivePieces(question, line) + '</div>';
     }
@@ -772,7 +832,7 @@
       return '<div class="visual-board" style="' + lineStyle(line) + '">' + clockHtml(question.input) + '</div>';
     }
     if (visual.type === 'objects') {
-      return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="object-grid">' + repeat(visual.count, function () { return '<span class="object-chip">' + visualTokenHtml(visual.icon || '■') + '</span>'; }) + '</div></div>';
+      return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="object-grid count-layout-' + Number(visual.layoutVariant || 0) + '">' + repeat(visual.count, function () { return '<span class="object-chip">' + visualTokenHtml(visual.icon || '■') + '</span>'; }) + '</div></div>';
     }
     if (visual.type === 'five-frame') {
       return '<div class="visual-board" style="' + lineStyle(line) + '">' + fiveFrame(visual.count) + '</div>';
@@ -798,7 +858,7 @@
     }
     if (visual.type === 'ten-bundle' || visual.type === 'ten-bundle-remove') {
       const number = visual.type === 'ten-bundle' ? visual.tens * 10 + visual.ones : visual.a;
-      return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="ten-frame-wrap">' + tenFrame(Math.min(10, number)) + '<div class="loose-parts">' + miniParts(Math.max(0, number - 10)) + '</div></div></div>';
+      return '<div class="visual-board" style="' + lineStyle(line) + '"><div class="ten-frame-wrap ten-layout-' + Number(visual.layoutVariant || 0) + '">' + tenFrame(Math.min(10, number)) + '<div class="loose-parts">' + miniParts(Math.max(0, number - 10)) + '</div></div></div>';
     }
     if (visual.type === 'place-value' || visual.type === 'place-value-remove') {
       const number = visual.type === 'place-value' ? visual.tens * 10 + visual.ones : visual.a;
@@ -913,9 +973,15 @@
   function actionHtml(question, line) {
     if (question.feedback) return feedbackHtml(question);
     if (question.kind === 'choice' || question.kind === 'route' || question.kind === 'sort') {
-      return '<div class="' + answerLayoutClass(question) + '">' + (question.options || []).map(function (option) {
-        return '<button class="answer-button' + (question.visual && question.visual.type === 'measure-method' ? ' method-answer' : '') + '" style="' + lineStyle(line) + '" data-answer="' + attr(optionValue(option)) + '">' + answerButtonContent(option, question) + '</button>';
+      const stagedChoice = activeCourseId === 'g1' && session && session.mode !== 'timeAttack';
+      const buttons = '<div class="' + answerLayoutClass(question) + '">' + (question.options || []).map(function (option) {
+        const value = String(optionValue(option));
+        const selected = stagedChoice && String(question.input) === value;
+        const answerAttribute = stagedChoice ? 'data-select-answer' : 'data-answer';
+        return '<button class="answer-button' + (selected ? ' selected' : '') + (question.visual && question.visual.type === 'measure-method' ? ' method-answer' : '') + '" style="' + lineStyle(line) + '" ' + answerAttribute + '="' + attr(value) + '" aria-pressed="' + selected + '">' + answerButtonContent(option, question) + '</button>';
       }).join('') + '</div>';
+      if (!stagedChoice) return buttons;
+      return buttons + '<div class="submit-row choice-submit"><button class="primary-button" style="' + lineStyle(line) + '" data-action="submit-choice" ' + (String(question.input) === '' ? 'disabled' : '') + '>これで けってい</button></div>';
     }
     if (question.kind === 'tap' || question.kind === 'remove' || question.kind === 'select') {
       if (question.visual && question.visual.type === 'unit-length-builder') {
@@ -936,6 +1002,15 @@
       const value = question.input === '' ? question.min : question.input;
       return '<div class="operation-panel"><div class="operation-readout">' + esc(value) + '</div><div class="adjuster"><button class="adjust-button" style="' + lineStyle(line) + '" data-adjust="-1" aria-label="かずを 1へらす">−</button><div class="adjust-value">−と＋で かずを かえる</div><button class="adjust-button" style="' + lineStyle(line) + '" data-adjust="1" aria-label="かずを 1ふやす">＋</button></div><div class="submit-row"><button class="primary-button" style="' + lineStyle(line) + '" data-action="submit-operation">この かずに する</button></div></div>';
     }
+    if (question.kind === 'numberline') {
+      const value = question.input === '' ? question.min : question.input;
+      return '<div class="operation-panel numberline-operation"><div class="operation-readout">いま ' + esc(value) + '</div><div class="numberline-controls"><button class="adjust-button" style="' + lineStyle(line) + '" data-adjust="-1" aria-label="ひとつ もどる">← もどる</button><button class="adjust-button" style="' + lineStyle(line) + '" data-adjust="1" aria-label="ひとつ すすむ">すすむ →</button></div><div class="submit-row"><button class="primary-button" style="' + lineStyle(line) + '" data-action="submit-operation">ここで けってい</button></div></div>';
+    }
+    if (question.kind === 'grouping') {
+      const value = question.input === '' ? 1 : question.input;
+      const unit = question.visual && question.visual.mode === 'share' ? 'ひとり ' + value + 'こずつ' : value + 'グループ';
+      return '<div class="operation-panel grouping-operation"><div class="operation-readout">' + childText(unit) + '</div><div class="adjuster"><button class="adjust-button" style="' + lineStyle(line) + '" data-adjust="-1" aria-label="ひとつ へらす">−</button><div class="adjust-value">わけかたを ためす</div><button class="adjust-button" style="' + lineStyle(line) + '" data-adjust="1" aria-label="ひとつ ふやす">＋</button></div><div class="submit-row"><button class="primary-button" style="' + lineStyle(line) + '" data-action="submit-operation">この わけかたで けってい</button></div></div>';
+    }
     if (question.kind === 'clock') {
       const clock = parseClock(question.input);
       return '<div class="operation-panel"><div class="operation-readout">' + clock.hour + ':' + String(clock.minute).padStart(2, '0') + '</div><div class="clock-controls"><div class="clock-control"><strong>みじかい はり</strong><div class="clock-button-row"><button class="adjust-button" style="' + lineStyle(line) + '" data-clock-part="hour" data-clock-delta="-1">−</button><button class="adjust-button" style="' + lineStyle(line) + '" data-clock-part="hour" data-clock-delta="1">＋</button></div></div><div class="clock-control"><strong>ながい はり</strong><div class="clock-button-row"><button class="adjust-button" style="' + lineStyle(line) + '" data-clock-part="minute" data-clock-delta="-1">−</button><button class="adjust-button" style="' + lineStyle(line) + '" data-clock-part="minute" data-clock-delta="1">＋</button></div></div></div><div class="submit-row"><button class="primary-button" style="' + lineStyle(line) + '" data-action="submit-operation">この じこくで けってい</button></div></div>';
@@ -946,15 +1021,16 @@
   function feedbackHtml(question) {
     const feedback = question.feedback;
     const good = feedback.kind === 'good' || feedback.kind === 'recovered';
-    const buttonLabel = feedback.action === 'retry' ? (session && session.mode === 'timeAttack' ? 'もういちど' : 'ヒントを みて もういちど') : 'つぎへ';
+    const taught = feedback.kind === 'teach';
+    const buttonLabel = feedback.action === 'retry' ? (session && session.mode === 'timeAttack' ? 'もういちど' : 'ヒントを つかって もういちど') : taught ? 'わかった・つぎへ' : 'つぎへ';
     return '<div class="feedback-panel ' + (good ? 'good' : 'hint') + '"><h3>' + childText(feedback.title) + '</h3><p>' + childText(feedback.text) + '</p><button class="' + (good ? 'primary-button' : 'secondary-button') + '" data-action="' + (feedback.action === 'retry' ? 'retry-question' : 'next-question') + '">' + buttonLabel + ' →</button></div>';
   }
 
   function renderQuestionCard(question, line, rush) {
     const interactionLabels = activeCourseId === 'g1' ? {
-      choice: 'ひとつ えらぶ', route: 'こたえを えらぶ', sort: 'なかまを えらぶ',
+      choice: 'えらんで けってい', route: 'えらんで けってい', sort: 'わけて けってい',
       tap: 'まるを タップ', remove: 'まるを とる', select: 'マスを タップ',
-      order: 'じゅんに ならべる', slider: 'かずを かえる', clock: 'はりを うごかす', input: 'すうじを いれる'
+      order: 'じゅんに ならべる', slider: 'かずを かえる', numberline: 'かずの せんを うごく', grouping: 'おなじ かずずつ わける', clock: 'はりを うごかす', input: 'すうじを いれる'
     } : {
       choice: '一つ えらぶ', route: '道を えらぶ', sort: 'トレイを えらぶ',
       tap: '部品を タップ', remove: '部品を 取り出す', select: 'マスを タップ',
@@ -1039,7 +1115,12 @@
     } else {
       session.chain = 0;
       question.showHint = true;
-      question.feedback = { kind: 'hint', title: 'ここを 見てみよう', text: question.hint, action: 'retry' };
+      const hints = Array.isArray(question.hints) && question.hints.length ? question.hints : [question.hint];
+      if (question.attempts >= 2) {
+        question.feedback = { kind: 'teach', title: 'いっしょに たしかめよう', text: question.explain || hints[hints.length - 1], action: 'next' };
+      } else {
+        question.feedback = { kind: 'hint', title: 'ここを 見てみよう', text: hints[0], action: 'retry' };
+      }
       playTone('hint');
     }
     saveState();
@@ -1184,8 +1265,9 @@
     state.recentRush[line.id] = recent.concat(pack.questions.reduce(function (keys, question) {
       keys.push(question.signature);
       if (activeCourseId === 'g1' && question.contentSignature) keys.push(question.contentSignature);
+      if (activeCourseId === 'g1' && question.learningSignature) keys.push(question.learningSignature);
       return keys;
-    }, [])).slice(activeCourseId === 'g1' ? -24 : -36);
+    }, [])).slice(activeCourseId === 'g1' ? -108 : -36);
     session = {
       mode: 'timeAttack',
       courseId: activeCourseId,
@@ -1696,6 +1778,15 @@
       handleAnswer(answer.dataset.answer);
       return;
     }
+    const selectedAnswer = event.target.closest('[data-select-answer]');
+    if (selectedAnswer) {
+      const question = currentQuestion();
+      if (!question || question.feedback) return;
+      question.input = selectedAnswer.dataset.selectAnswer;
+      playTone('tap');
+      render();
+      return;
+    }
     const piece = event.target.closest('[data-piece]');
     if (piece) {
       togglePiece(piece.dataset.piece);
@@ -1831,6 +1922,7 @@
       switchLine(actionNode.dataset.line, false);
       startStage(Number(actionNode.dataset.stage), actionNode.dataset.line);
     }
+    else if (action === 'submit-choice') handleAnswer(currentQuestion() && currentQuestion().input);
     else if (action === 'submit-operation') handleAnswer(normalizeQuestionInput(currentQuestion()));
     else if (action === 'reset-operation') { resetQuestionInteraction(currentQuestion()); render(); }
     else if (action === 'retry-question') retryQuestion();

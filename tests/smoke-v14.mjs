@@ -5,6 +5,7 @@ import vm from 'node:vm';
 const rootUrl = new URL('../', import.meta.url);
 const sourceFiles = [
   'game-core.js',
+  'grade1-runtime.js',
   'grade2-curriculum.js',
   'grade2-runtime-arithmetic.js',
   'grade2-runtime-world.js',
@@ -458,7 +459,7 @@ for (const filename of sourceFiles) {
 }
 assert(/132\s*ステージ/.test(html), 'index.html にG1/G2全132ステージが反映されていません');
 assert(manifest.description.includes('132ステージ'), 'manifest にG1/G2全132ステージが反映されていません');
-assert(/hirameki-kobo-v9/.test(sw), '一年生UX修正版でService Workerのキャッシュ世代が更新されていません');
+assert(/hirameki-kobo-v11/.test(sw), '一年生出題契約版でService Workerのキャッシュ世代が更新されていません');
 
 console.log(
   'v14 smoke test: G1/G2 132 stages / G2 ' + generatedQuestions +

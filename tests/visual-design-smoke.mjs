@@ -25,7 +25,7 @@ for (const asset of assets) {
 }
 
 assert(html.includes('rel="preload" as="image" href="assets/workshop-hero-v1.jpg"'), 'ヒーロー画像を先読みしていません');
-assert(sw.includes('hirameki-kobo-v9'), '一年生UX修正版のキャッシュ世代が不正です');
+assert(sw.includes('hirameki-kobo-v11'), '一年生出題契約版のキャッシュ世代が不正です');
 
 assert(app.includes('VISUAL_TOKEN_META'), '絵文字から教材オブジェクトへ変換する層がありません');
 assert(app.includes('visualTokenHtml(icon)'), 'タップ部品が教材オブジェクトを使っていません');

@@ -4,12 +4,13 @@ import vm from 'node:vm';
 
 const rootUrl = new URL('../', import.meta.url);
 const coreSource = fs.readFileSync(new URL('game-core.js', rootUrl), 'utf8');
+const grade1RuntimeSource = fs.readFileSync(new URL('grade1-runtime.js', rootUrl), 'utf8');
 const appSource = fs.readFileSync(new URL('app.js', rootUrl), 'utf8');
 const audioSource = fs.readFileSync(new URL('audio-core.js', rootUrl), 'utf8');
 const indexSource = fs.readFileSync(new URL('index.html', rootUrl), 'utf8');
 const swSource = fs.readFileSync(new URL('sw.js', rootUrl), 'utf8');
 
-for (const [name, source] of [['game-core.js', coreSource], ['app.js', appSource], ['audio-core.js', audioSource]]) {
+for (const [name, source] of [['game-core.js', coreSource], ['grade1-runtime.js', grade1RuntimeSource], ['app.js', appSource], ['audio-core.js', audioSource]]) {
   new vm.Script(source, { filename: name });
 }
 
@@ -17,6 +18,7 @@ const sandbox = { console };
 sandbox.globalThis = sandbox;
 vm.createContext(sandbox);
 new vm.Script(coreSource, { filename: 'game-core.js' }).runInContext(sandbox);
+new vm.Script(grade1RuntimeSource, { filename: 'grade1-runtime.js' }).runInContext(sandbox);
 const core = sandbox.HiramekiCore;
 
 const firstStage = core.LINES.number.stages[0];
@@ -38,12 +40,12 @@ for (const seed of [101, 202, 303, 404, 505, 606]) {
   const questions = core.makeStageQuestions('number', 0, { seed }).questions;
   assert.equal(questions.length, 8, '最初のステージは8問必要です');
   assert.equal(new Set(questions.map(visibleFingerprint)).size, 8, '子どもから見て同じ問題が繰り返されています');
-  assert(new Set(questions.map(question => question.templateId)).size >= 4, '最初のステージの問い方が単調です');
+  assert.deepEqual(Array.from(questions, question => question.arcRole), Array.from(core.G1_ARC), '8問の学習アークがありません');
   questions.forEach((question, index) => {
-    assert(['choice', 'tap', 'input', 'slider'].includes(question.kind), '最初のステージに不要な操作があります');
+    assert.equal(question.kind, 'choice', '同じ課題なのに入力方法が入れ替わっています');
     assert(/まる/.test(question.prompt), '数だけを見る問題に別の物体が混ざっています');
     assert(!/分類|仕分け|トレイ|ギア|回路|部品/.test(question.prompt + question.instruction), '最初のステージに不要な世界観用語があります');
-    if (index > 0) assert.notEqual(question.interactionFamily, questions[index - 1].interactionFamily, '同じ問い方が連続しています');
+    if (index > 0) assert.equal(question.interactionFamily, questions[index - 1].interactionFamily, '同じ課題の中心操作が途中で変わっています');
     if (question.visual.type === 'objects') assert.equal(question.visual.icon, 'count-dot', '数える対象が毎回変わっています');
     if (question.visual.type === 'selector') assert(question.visual.icons.every(icon => icon === 'count-dot'), 'タップ対象に視覚ノイズがあります');
   });
@@ -89,7 +91,7 @@ assert(audio.DEFAULT_BGM_VOLUME >= 0.65, 'BGM初期音量が小さすぎます')
 assert(audio.MAX_BGM_GAIN >= 0.25, 'BGM出力が小さすぎます');
 assert(audioSource.includes('previewBgm'), 'BGMの試聴機能がありません');
 assert(audioSource.includes("musicData: 'synth-loop-v2'"), '実際の音楽データを識別できません');
-assert(indexSource.includes('styles.css?v=9') && indexSource.includes('app.js?v=9'), 'iPadが旧CSS・JavaScriptを再利用しない版番号がありません');
-assert(swSource.includes('./styles.css?v=9') && swSource.includes('./app.js?v=9'), 'オフラインキャッシュに版番号付きファイルがありません');
+assert(indexSource.includes('styles.css?v=11') && indexSource.includes('app.js?v=11') && indexSource.includes('grade1-runtime.js?v=11'), 'iPadが旧CSS・JavaScriptを再利用しない版番号がありません');
+assert(swSource.includes('./styles.css?v=11') && swSource.includes('./app.js?v=11') && swSource.includes('./grade1-runtime.js?v=11'), 'オフラインキャッシュに版番号付きファイルがありません');
 
 console.log('grade 1 foundation smoke: math-first opening / neutral counters / visible diversity / plain task language / admin unlock / audible BGM preview OK');

@@ -1,17 +1,18 @@
 const CACHE_PREFIX = 'hirameki-kobo-';
-const CACHE_NAME = 'hirameki-kobo-v9';
+const CACHE_NAME = 'hirameki-kobo-v11';
 const APP_FILES = [
   './',
   './index.html',
-  './styles.css?v=9',
-  './game-core.js?v=9',
-  './grade2-curriculum.js?v=9',
-  './grade2-runtime-arithmetic.js?v=9',
-  './grade2-runtime-world.js?v=9',
-  './course-core.js?v=9',
-  './story-core.js?v=9',
-  './audio-core.js?v=9',
-  './app.js?v=9',
+  './styles.css?v=11',
+  './game-core.js?v=11',
+  './grade1-runtime.js?v=11',
+  './grade2-curriculum.js?v=11',
+  './grade2-runtime-arithmetic.js?v=11',
+  './grade2-runtime-world.js?v=11',
+  './course-core.js?v=11',
+  './story-core.js?v=11',
+  './audio-core.js?v=11',
+  './app.js?v=11',
   './assets/workshop-hero-v1.jpg',
   './assets/story-guides-v1.jpg',
   './assets/measure-methods-v1.jpg',

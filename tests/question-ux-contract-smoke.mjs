@@ -5,6 +5,7 @@ import vm from 'node:vm';
 const rootUrl = new URL('../', import.meta.url);
 const runtimeFiles = [
   'game-core.js',
+  'grade1-runtime.js',
   'grade2-curriculum.js',
   'grade2-runtime-arithmetic.js',
   'grade2-runtime-world.js',
@@ -70,12 +71,13 @@ for (const stageIndex of [0, 1]) {
 }
 
 const unitPack = core.makeStageQuestions('measure', 2, { seed: 8200 });
-assert.deepEqual(new Set(unitPack.questions.map(question => question.templateId)), new Set(['measure.unit.build', 'measure.unit.count', 'measure.unit.counter']), 'ブロック長さ問題の操作バリエーションが不足しています');
+assert(unitPack.questions.every(question => question.templateId.startsWith('measure.unit.build.arc-')), 'ブロック長さ問題で中心操作が入れ替わっています');
+assert(unitPack.questions.every(question => question.kind === 'tap'), 'ブロックを並べる課題はタップ操作に固定する必要があります');
 const unitBuilders = unitPack.questions.filter(question => question.visual.type === 'unit-length-builder');
 assert(unitBuilders.length > 0, 'ブロックを並べる専用問題がありません');
 unitBuilders.forEach(question => {
   assert.equal(question.correct, question.visual.targetUnits, '棒の長さと正解ブロック数が一致しません');
-  assert(/右はし/.test(question.instruction) && /タップ/.test(question.instruction) && /けってい/.test(question.instruction), 'ブロック問題の操作説明が実操作と一致しません');
+  assert(/みぎはし/.test(question.instruction) && /タップ/.test(question.instruction) && /けってい/.test(question.instruction), 'ブロック問題の操作説明が実操作と一致しません');
 });
 
 const methodPack = core.makeStageQuestions('measure', 3, { seed: 9300 });

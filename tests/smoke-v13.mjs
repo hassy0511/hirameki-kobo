@@ -4,11 +4,13 @@ import vm from 'node:vm';
 
 const rootUrl = new URL('../', import.meta.url);
 const coreSource = fs.readFileSync(new URL('game-core.js', rootUrl), 'utf8');
+const grade1RuntimeSource = fs.readFileSync(new URL('grade1-runtime.js', rootUrl), 'utf8');
 const appSource = fs.readFileSync(new URL('app.js', rootUrl), 'utf8');
 const html = fs.readFileSync(new URL('index.html', rootUrl), 'utf8');
 const css = fs.readFileSync(new URL('styles.css', rootUrl), 'utf8');
 
 new vm.Script(coreSource, { filename: 'game-core.js' });
+new vm.Script(grade1RuntimeSource, { filename: 'grade1-runtime.js' });
 new vm.Script(appSource, { filename: 'app.js' });
 
 function createCore() {
@@ -16,12 +18,13 @@ function createCore() {
   sandbox.globalThis = sandbox;
   vm.createContext(sandbox);
   new vm.Script(coreSource, { filename: 'game-core.js' }).runInContext(sandbox);
+  new vm.Script(grade1RuntimeSource, { filename: 'grade1-runtime.js' }).runInContext(sandbox);
   return sandbox.HiramekiCore;
 }
 
 const core = createCore();
 assert(core, 'HiramekiCoreが公開されませんでした');
-assert.equal(core.STATE_VERSION, 3, '保存データのversionは3である必要があります');
+assert.equal(core.STATE_VERSION, 4, '保存データのversionは4である必要があります');
 assert.equal(core.LINE_ORDER.length, 6, '学習ラインは6本必要です');
 assert.deepEqual(Array.from(core.LINE_ORDER), ['number', 'addition', 'subtraction', 'measure', 'shape', 'solve'], '学習ラインの順序が不正です');
 
@@ -43,7 +46,7 @@ assert.deepEqual(
   '既存の引き算進捗IDが変わっています'
 );
 
-const knownKinds = new Set(['choice', 'sort', 'tap', 'remove', 'slider', 'route', 'order', 'clock', 'select', 'keypad', 'input']);
+const knownKinds = new Set(['choice', 'sort', 'tap', 'remove', 'slider', 'route', 'order', 'clock', 'select', 'keypad', 'input', 'numberline', 'grouping']);
 let generated = 0;
 const kindsByLine = {};
 const storyByLine = {};
@@ -65,6 +68,9 @@ function validateMath(question, label) {
       assert(value >= 0 && value <= 20, label + ': 3数計算の途中値が範囲外です');
     });
     assert.equal(math.result, value, label + ': 3数計算の答えが不正です');
+  } else if (math.kind === 'groups') {
+    assert.equal(math.total, math.groups * math.perGroup, label + ': 等分のまとまりが不正です');
+    assert([math.groups, math.perGroup].includes(math.result), label + ': 等分の答えが不正です');
   } else {
     assert.fail(label + ': 未知の計算メタデータです ' + math.kind);
   }
@@ -142,7 +148,7 @@ const legacyV1 = {
   history: [{ stage: 'garden', score: 7, stars: 2, cleared: true, seconds: 20, at: '2026-01-01T00:00:00.000Z' }]
 };
 const migratedV1 = core.migrateState(legacyV1);
-assert.equal(migratedV1.version, 3, 'v1からv3へ移行されません');
+assert.equal(migratedV1.version, 4, 'v1からv4へ移行されません');
 assert.equal(migratedV1.lastLine, 'addition', '旧データの開始ラインは足し算である必要があります');
 assert.equal(migratedV1.progress.garden.stars, 2, '旧足し算進捗が移行されません');
 assert.equal(migratedV1.lineStats.addition.totalAnswers, 12, '旧統計が足し算へ移行されません');
@@ -210,6 +216,7 @@ function createAppHarness(savedRaw = null) {
   sandbox.globalThis = sandbox;
   vm.createContext(sandbox);
   new vm.Script(coreSource, { filename: 'game-core.js' }).runInContext(sandbox);
+  new vm.Script(grade1RuntimeSource, { filename: 'grade1-runtime.js' }).runInContext(sandbox);
   new vm.Script(appSource, { filename: 'app.js' }).runInContext(sandbox);
   return { app: sandbox.HiramekiApp, appElement, storage };
 }
