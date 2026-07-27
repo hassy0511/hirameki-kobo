@@ -91,7 +91,15 @@ assert(audio.DEFAULT_BGM_VOLUME >= 0.65, 'BGM初期音量が小さすぎます')
 assert(audio.MAX_BGM_GAIN >= 0.25, 'BGM出力が小さすぎます');
 assert(audioSource.includes('previewBgm'), 'BGMの試聴機能がありません');
 assert(audioSource.includes("musicData: 'synth-loop-v2'"), '実際の音楽データを識別できません');
-assert(indexSource.includes('styles.css?v=11') && indexSource.includes('app.js?v=11') && indexSource.includes('grade1-runtime.js?v=11'), 'iPadが旧CSS・JavaScriptを再利用しない版番号がありません');
-assert(swSource.includes('./styles.css?v=11') && swSource.includes('./app.js?v=11') && swSource.includes('./grade1-runtime.js?v=11'), 'オフラインキャッシュに版番号付きファイルがありません');
+// 版番号は中身を直したときに上げる。番号そのものではなく、
+// index.html と Service Worker が同じ番号を指していることを検査する。
+const indexVersion = indexSource.match(/app\.js\?v=(\d+)/);
+assert(indexVersion, 'iPadが旧CSS・JavaScriptを再利用しない版番号がありません');
+const appVersion = indexVersion[1];
+['styles.css', 'app.js', 'game-core.js', 'grade1-runtime.js'].forEach(file => {
+  assert(indexSource.includes(file + '?v=' + appVersion), 'index.html の ' + file + ' に版番号がありません');
+  assert(swSource.includes('./' + file + '?v=' + appVersion), 'オフラインキャッシュの ' + file + ' が index.html と違う版番号です');
+});
+assert(swSource.includes("hirameki-kobo-v" + appVersion), 'Service Workerのキャッシュ世代が配信ファイルの版番号と一致していません');
 
 console.log('grade 1 foundation smoke: math-first opening / neutral counters / visible diversity / plain task language / admin unlock / audible BGM preview OK');

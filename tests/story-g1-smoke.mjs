@@ -62,7 +62,7 @@ assert(indexHtml.indexOf('story-core.js') < indexHtml.indexOf('app.js'), 'story-
 assert(indexHtml.indexOf('audio-core.js') < indexHtml.indexOf('app.js'), 'audio-core.js はapp.jsより先に読み込む必要があります');
 assert(sw.includes('./story-core.js'), 'Service Workerにstory-core.jsがありません');
 assert(sw.includes('./audio-core.js'), 'Service Workerにaudio-core.jsがありません');
-assert(sw.includes('hirameki-kobo-v11'), '一年生出題契約版のキャッシュ世代が不正です');
+assert(/hirameki-kobo-v\d+/.test(sw), 'Service Workerのキャッシュ世代がありません');
 
 function createAppHarness(options = {}) {
   const appElement = { innerHTML: '' };

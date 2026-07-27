@@ -459,7 +459,8 @@ for (const filename of sourceFiles) {
 }
 assert(/132\s*ステージ/.test(html), 'index.html にG1/G2全132ステージが反映されていません');
 assert(manifest.description.includes('132ステージ'), 'manifest にG1/G2全132ステージが反映されていません');
-assert(/hirameki-kobo-v11/.test(sw), '一年生出題契約版でService Workerのキャッシュ世代が更新されていません');
+assert(/hirameki-kobo-v(\d+)/.test(sw), 'Service Workerのキャッシュ世代がありません');
+assert(Number(sw.match(/hirameki-kobo-v(\d+)/)[1]) >= 12, '出題を直したのにService Workerのキャッシュ世代が更新されていません');
 
 console.log(
   'v14 smoke test: G1/G2 132 stages / G2 ' + generatedQuestions +
